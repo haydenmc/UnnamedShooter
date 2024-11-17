@@ -1,5 +1,7 @@
 // C++ standard library
+#include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -20,3 +22,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include "Utility/SDLWrappers.h"
+
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>

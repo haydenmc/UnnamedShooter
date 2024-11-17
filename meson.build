@@ -2,7 +2,7 @@ project('unnamed-shooter', 'cpp',
     version: '0.0.1',
     default_options: [
         'cpp_std=c++20',
-        'warning_level=2',
+        'warning_level=3',
         'werror=true',
     ])
 
@@ -31,6 +31,12 @@ sdl2_wrap = subproject('sdl2',
         'werror=false',
         'warning_level=1',
     ])
+glm_wrap = subproject('glm',
+    default_options: [
+        'cpp_std=c++20',
+        'werror=false',
+        'warning_level=1',
+    ])
 
 # Source files
 sources = [
@@ -40,6 +46,7 @@ sources = [
     'src/Input.cpp',
     'src/Renderer.cpp',
     'src/Simulation.cpp',
+    'src/Entities/CameraEntity.cpp',
 ]
 
 # Dependencies
@@ -47,6 +54,7 @@ dependencies = [
     dependency('fmt'),
     dependency('spdlog'),
     dependency('sdl2'),
+    dependency('glm'),
 ]
 
 # Subsystem for Windows

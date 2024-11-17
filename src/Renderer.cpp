@@ -30,10 +30,21 @@ Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoResolution& re
     m_frameBufferTexture{ CreateFrameBufferTexture(m_renderer.get(), m_resolution) }
 {}
 
-void Renderer::Render()
+void Renderer::Render(SimulationState const& simulationState)
 {
+    ClearBuffer();
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr, m_frameBuffer.data(),
         (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
     SDL_RenderPresent(m_renderer.get());
+}
+
+void Renderer::ClearBuffer()
+{
+    ClearBuffer(c_defaultBackgroundColor);
+}
+
+void Renderer::ClearBuffer(uint32_t color)
+{
+    std::fill(m_frameBuffer.begin(), m_frameBuffer.end(), color);
 }

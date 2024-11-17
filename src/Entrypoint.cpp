@@ -40,10 +40,10 @@ int Entrypoint(ArgList arguments)
             }
 
             // Simulate
-            simulation.Update();
+            auto const& simulationState{ simulation.Update(inputState) };
 
             // Render
-            renderer.Render();
+            renderer.Render(simulationState);
         }
         SPDLOG_INFO("End sim loop, destruct subsystems");
     }

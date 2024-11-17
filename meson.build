@@ -59,6 +59,8 @@ win_subsystem = 'windows'
 if get_option('buildtype').startswith('debug')
     add_project_arguments('-DDEBUG', language: 'cpp')
     win_subsystem = 'console'
+else
+    add_project_arguments('-DNDEBUG', language: 'cpp')
 endif
 
 executable(meson.project_name(),

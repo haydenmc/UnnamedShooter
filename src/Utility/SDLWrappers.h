@@ -2,6 +2,29 @@
 #include <memory>
 #include <SDL.h>
 
+struct SdlException : public std::runtime_error
+{
+    SdlException(const char* message) : std::runtime_error(message) {}
+    SdlException(std::string message) : std::runtime_error(message) {}
+};
+
+template<typename T>
+inline void CheckSdlPtr(T* sdlPointer)
+{
+    if (sdlPointer == nullptr)
+    {
+        throw SdlException{ SDL_GetError() };
+    }
+}
+
+inline void CheckSdlReturn(int sdlReturnValue)
+{
+    if (sdlReturnValue < 0)
+    {
+        throw SdlException{ SDL_GetError() };
+    }
+}
+
 struct SDLWindowDeleter
 {
     void operator() (SDL_Window* window)

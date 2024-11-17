@@ -1,6 +1,8 @@
 // C++ standard library
+#include <cassert>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>

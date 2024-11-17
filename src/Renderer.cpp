@@ -4,15 +4,13 @@
 
 namespace
 {
+    constexpr uint32_t c_defaultBackgroundColor{ 0xFFFF0000 };
+
     SDLRendererPtr CreateRenderer(SDL_Window* window)
     {
         SPDLOG_INFO("Creating SDL Renderer");
         SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-        if (renderer == nullptr)
-        {
-            throw new std::runtime_error(fmt::format("Failed to create SDL Renderer: {}",
-                SDL_GetError()));
-        }
+        CheckSdlPtr(renderer);
         return SDLRendererPtr{ renderer };
     }
 
@@ -21,16 +19,21 @@ namespace
         SPDLOG_INFO("Creating framebuffer texture");
         SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, resolution.Width, resolution.Height);
-        if (texture == nullptr)
-        {
-            throw new std::runtime_error(fmt::format("Failed to create SDL Texture: {}",
-                SDL_GetError()));
-        }
+        CheckSdlPtr(texture);
         return SDLTexturePtr{ texture };
     }
 }
 
 Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoResolution& resolution) :
     m_window{ window }, m_resolution{ resolution }, m_renderer{ CreateRenderer(m_window.get()) },
+    m_frameBuffer( static_cast<size_t>(m_resolution.Width * m_resolution.Height), c_defaultBackgroundColor ),
     m_frameBufferTexture{ CreateFrameBufferTexture(m_renderer.get(), m_resolution) }
-{ }
+{}
+
+void Renderer::Render()
+{
+    CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr, m_frameBuffer.data(),
+        (m_resolution.Width * sizeof(uint32_t))));
+    CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
+    SDL_RenderPresent(m_renderer.get());
+}

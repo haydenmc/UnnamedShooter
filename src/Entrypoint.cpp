@@ -2,6 +2,7 @@
 #include "Configuration.h"
 #include "Display.h"
 #include "Input.h"
+#include "Simulation.h"
 
 using ArgList = std::vector<std::pair<std::string, std::string>>;
 
@@ -21,6 +22,7 @@ int Entrypoint(ArgList arguments)
     // Initialize subsystems in their own scope so we can perform additional
     // cleanup after they are destructed.
     {
+        Simulation simulation{};
         Display display{ resolution };
         Renderer renderer{ display.GetWindow(), resolution };
         Input input{};
@@ -29,12 +31,19 @@ int Entrypoint(ArgList arguments)
         SPDLOG_INFO("Begin sim loop");
         while (true)
         {
+            // Get input
             const auto& inputState{ input.GetInputState() };
             if (inputState.Escape)
             {
                 SPDLOG_INFO("Escape pressed, exiting sim loop");
                 break;
             }
+
+            // Simulate
+            simulation.Update();
+
+            // Render
+            renderer.Render();
         }
         SPDLOG_INFO("End sim loop, destruct subsystems");
     }

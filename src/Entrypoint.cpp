@@ -7,6 +7,9 @@
 using ArgList = std::vector<std::pair<std::string, std::string>>;
 
 int Entrypoint(ArgList arguments)
+#ifndef DEBUG
+try // Don't catch unhandled exceptions for debug builds
+#endif
 {
     SPDLOG_INFO("Entrypoint");
 
@@ -51,6 +54,16 @@ int Entrypoint(ArgList arguments)
     SPDLOG_INFO("Exit");
     return 0;
 }
+#ifndef DEBUG
+catch (std::exception const& e)
+{
+    SPDLOG_CRITICAL("!!! Unhandled Exception: {}", e.what());
+    // Shut down logger to make sure all messages are flushed before the process
+    // is terminated.
+    spdlog::shutdown();
+    throw;
+}
+#endif
 
 int main(int argumentsCount, char* arguments[])
 {

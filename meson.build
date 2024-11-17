@@ -34,7 +34,12 @@ sdl2_wrap = subproject('sdl2',
 
 # Source files
 sources = [
+    'src/Configuration.cpp',
+    'src/Display.cpp',
     'src/Entrypoint.cpp',
+    'src/Input.cpp',
+    'src/Renderer.cpp',
+    'src/Simulation.cpp',
 ]
 
 # Dependencies
@@ -45,9 +50,9 @@ dependencies = [
 ]
 
 # Subsystem for Windows
-# This determines whether the process starts with a console window 
-# and calls main(...) ('console'), or starts without a console and calls
-# WinMain(...) ('windows')
+# This determines whether the process starts with a console window ('console')
+# and calls main(...), or starts without a console ('windows') and calls
+# WinMain(...)
 win_subsystem = 'windows'
 
 # Debug options
@@ -59,5 +64,8 @@ endif
 executable(meson.project_name(),
     dependencies: dependencies,
     cpp_pch: 'src/pch.h',
+    include_directories: [
+        'src',
+    ],
     sources: sources,
     win_subsystem: win_subsystem)

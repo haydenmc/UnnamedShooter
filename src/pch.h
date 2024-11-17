@@ -1,4 +1,6 @@
 // C++ standard library
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -11,3 +13,8 @@
 
 // Spdlog
 #include <spdlog/spdlog.h>
+
+// SDL
+#define SDL_MAIN_HANDLED
+#include <SDL.h>
+#include "Utility/SDLWrappers.h"

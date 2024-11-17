@@ -1,10 +1,10 @@
 #include <pch.h>
 #include "Configuration.h"
 
-Configuration::Configuration() : m_videoResolution{ 640, 360 }
+Configuration::Configuration() : m_videoConfiguration{ 640, 360, true }
 { }
 
-VideoResolution Configuration::GetVideoResolution()
+VideoConfiguration Configuration::GetVideoConfiguration()
 {
-    return m_videoResolution;
+    return m_videoConfiguration;
 }

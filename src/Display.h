@@ -4,10 +4,10 @@
 
 struct Display
 {
-    Display(const VideoResolution& resolution);
+    Display(const VideoConfiguration& configuration);
     ~Display();
     std::shared_ptr<SDL_Window> GetWindow();
 private:
-    VideoResolution const m_resolution;
+    VideoConfiguration const m_configuration;
     std::shared_ptr<SDL_Window> const m_window;
 };

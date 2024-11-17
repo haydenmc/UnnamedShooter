@@ -20,7 +20,7 @@ try // Don't catch unhandled exceptions for debug builds
 
     // TODO: Load Configuration from file, arguments, and env vars
     Configuration configuration;
-    VideoResolution resolution{ configuration.GetVideoResolution() };
+    VideoConfiguration resolution{ configuration.GetVideoConfiguration() };
 
     // Initialize subsystems in their own scope so we can perform additional
     // cleanup after they are destructed.

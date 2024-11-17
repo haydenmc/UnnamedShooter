@@ -1,15 +1,16 @@
 #pragma once
 
-struct VideoResolution
+struct VideoConfiguration
 {
     uint16_t Width;
     uint16_t Height;
+    bool IsFullscreen;
 };
 
 struct Configuration
 {
     Configuration();
-    VideoResolution GetVideoResolution();
+    VideoConfiguration GetVideoConfiguration();
 private:
-    VideoResolution m_videoResolution;
+    VideoConfiguration m_videoConfiguration;
 };

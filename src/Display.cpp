@@ -3,21 +3,27 @@
 
 namespace
 {
-    std::shared_ptr<SDL_Window> CreateSDLWindow(VideoResolution resolution)
+    std::shared_ptr<SDL_Window> CreateSDLWindow(VideoConfiguration configuration)
     {
         SPDLOG_INFO("Initializing SDL");
         CheckSdlReturn(SDL_InitSubSystem(SDL_INIT_VIDEO));
 
-        SPDLOG_INFO("Creating {}x{} window", resolution.Width, resolution.Height);
+        SPDLOG_INFO("Creating {}x{} window", configuration.Width, configuration.Height);
         SDL_Window* window = SDL_CreateWindow(nullptr, SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, resolution.Width, resolution.Height, 0);
+            SDL_WINDOWPOS_CENTERED, configuration.Width, configuration.Height, 0);
         CheckSdlPtr(window);
+
+        if (configuration.IsFullscreen)
+        {
+            CheckSdlReturn(SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP));
+        }
+
         return MakeSharedSDLWindowPtr(window);
     }
 }
 
-Display::Display(const VideoResolution& resolution) : m_resolution{ resolution },
-    m_window{ CreateSDLWindow(m_resolution) }
+Display::Display(const VideoConfiguration& configuration) : m_configuration{ configuration },
+    m_window{ CreateSDLWindow(m_configuration) }
 { }
 
 Display::~Display()

@@ -37,6 +37,12 @@ glm_wrap = subproject('glm',
         'werror=false',
         'warning_level=1',
     ])
+fpm_wrap = subproject('fpm',
+    default_options: [
+        'cpp_std=c++20',
+        'werror=false',
+        'warning_level=1',
+    ])
 
 # Source files
 sources = [
@@ -55,6 +61,7 @@ dependencies = [
     dependency('spdlog'),
     dependency('sdl2'),
     dependency('glm'),
+    dependency('fpm'),
 ]
 
 # Subsystem for Windows

@@ -1,0 +1,9 @@
+[wrap-file]
+directory = fpm-aca475058b762e81a61495473a74fc8e48915fc6
+source_url = https://github.com/MikeLankamp/fpm/archive/aca475058b762e81a61495473a74fc8e48915fc6.tar.gz
+source_filename = fpm-aca475058b762e81a61495473a74fc8e48915fc6.tar.gz
+source_hash = BC443ED4A2E3B5748D6AF97BEBBF9604F940BBC08AF9082B918D8B71B59A7DA1
+patch_directory = fpm
+
+[provide]
+fpm = fpm_dep

@@ -33,6 +33,8 @@ Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoResolution& re
 void Renderer::Render(SimulationState const& simulationState)
 {
     ClearBuffer();
+    // Draw
+    DrawRectangle(16, 16, 32, 32, 0xFF00FF00);
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr, m_frameBuffer.data(),
         (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
@@ -47,4 +49,24 @@ void Renderer::ClearBuffer()
 void Renderer::ClearBuffer(uint32_t color)
 {
     std::fill(m_frameBuffer.begin(), m_frameBuffer.end(), color);
+}
+
+void Renderer::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
+{
+    m_frameBuffer[(m_resolution.Width * y) + x] = color;
+}
+
+void Renderer::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint32_t color)
+{
+    uint16_t minX{ std::min(x1, x2) };
+    uint16_t maxX{ std::max(x1, x2) };
+    uint16_t minY{ std::min(y1, y2) };
+    uint16_t maxY{ std::max(y1, y2) };
+    for (uint16_t y{ minY }; y <= maxY; ++y)
+    {
+        for (uint16_t x{ minX }; x <= maxX; ++x)
+        {
+            DrawPixel(x, y, color);
+        }
+    }
 }

@@ -50,6 +50,7 @@ sources = [
     'src/Display.cpp',
     'src/Entrypoint.cpp',
     'src/Input.cpp',
+    'src/Mesh.cpp',
     'src/Renderer.cpp',
     'src/Simulation.cpp',
     'src/Entities/CameraEntity.cpp',

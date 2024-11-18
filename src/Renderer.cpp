@@ -1,11 +1,15 @@
 #include <pch.h>
 #include "Configuration.h"
+#include "Mesh.h"
 #include "Renderer.h"
 
 namespace
 {
     constexpr fpm::fixed_16_16 c_zero { 0 };
     constexpr uint32_t c_defaultBackgroundColor{ 0xFFFF0000 };
+    constexpr float c_defaultFovRads{ 3.14159265f / 2.0f };
+    constexpr float c_nearPlane{ 0.1f };
+    constexpr float c_farPlane{ 100.0f };
 
     SDLRendererPtr CreateRenderer(SDL_Window* window)
     {
@@ -22,6 +26,12 @@ namespace
             SDL_TEXTUREACCESS_STREAMING, resolution.Width, resolution.Height);
         CheckSdlPtr(texture);
         return SDLTexturePtr{ texture };
+    }
+
+    glm::mat4 CreatePerspectiveMatrix(float fovYRads, float width, float height,
+        float nearPlane, float farPlane)
+    {
+        return glm::perspectiveFovLH_ZO(fovYRads, width, height, nearPlane, farPlane);
     }
 
     fpm::fixed_16_16 TriangleDeterminant(FixedPoint2D pointA, FixedPoint2D pointB,
@@ -45,16 +55,20 @@ namespace
 
 Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoConfiguration& resolution) :
     m_window{ window }, m_resolution{ resolution }, m_renderer{ CreateRenderer(m_window.get()) },
-    m_frameBuffer( static_cast<size_t>(m_resolution.Width * m_resolution.Height), c_defaultBackgroundColor ),
-    m_frameBufferTexture{ CreateFrameBufferTexture(m_renderer.get(), m_resolution) }
+    m_frameBuffer( static_cast<size_t>(m_resolution.Width * m_resolution.Height),
+        c_defaultBackgroundColor ),
+    m_frameBufferTexture{ CreateFrameBufferTexture(m_renderer.get(), m_resolution) },
+    m_projectionMatrix{ CreatePerspectiveMatrix(c_defaultFovRads, m_resolution.Width,
+        m_resolution.Height, c_nearPlane, c_farPlane) }
 {}
 
 void Renderer::Render(SimulationState const& simulationState)
 {
     ClearBuffer();
     // Draw
-    DrawTriangle({ 64, 32 }, { 32, 64 }, { 96, 64 }, 0xFF0000FF);
-    DrawTriangle({ 128, 32 }, { 64, 32 }, { 96, 64 }, 0xFF00FFFF);
+    // DrawTriangle({ 64, 32 }, { 32, 64 }, { 96, 64 }, 0xFF0000FF);
+    // DrawTriangle({ 128, 32 }, { 64, 32 }, { 96, 64 }, 0xFF00FFFF);
+    DrawScene(&simulationState.Camera, &simulationState.RootWorldEntity);
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr, m_frameBuffer.data(),
         (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
@@ -138,5 +152,52 @@ void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t c
                 DrawPixel(point.x, point.y, color);
             }
         }
+    }
+}
+
+void Renderer::DrawScene(CameraEntity const *cameraEntity, Entity const *sceneEntity)
+{
+    // Calculate view/camera matrix
+    // TODO: Respect camera rotation
+    auto viewMatrix{ glm::lookAtLH(cameraEntity->GetPosition(), glm::vec3{ 0.0f, 0.0f, 1.0f },
+        glm::vec3{ 0.0f, 1.0f, 0.0f } ) };
+    DrawEntityTreeMeshes(viewMatrix, sceneEntity);
+}
+
+void Renderer::DrawEntityTreeMeshes(glm::mat4 const& viewMatrix, Entity const* rootEntity)
+{
+    for (const auto& child : rootEntity->GetChildren())
+    {
+        DrawEntityTreeMeshes(viewMatrix, child.get());
+    }
+    for (const auto& mesh : rootEntity->GetMeshes())
+    {
+        DrawEntityMesh(viewMatrix, rootEntity, mesh.get());
+    }
+}
+
+void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity, Mesh const *mesh)
+{
+    // First apply entity transformations
+    glm::mat4 entityTransform{ glm::translate(entity->GetPosition()) };
+    auto entityRotation{ entity->GetRotation() };
+    entityTransform *= glm::eulerAngleXYZ(entityRotation.x, entityRotation.y,
+        entityRotation.z);
+
+    for (const auto& vertex : mesh->Vertices)
+    {
+        //auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * vertex };
+        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * vertex };
+        SPDLOG_INFO("Transformed vertex: {}, {}, {}, {}", transformedVertex.x,
+            transformedVertex.y, transformedVertex.z, transformedVertex.w);
+
+        auto screenX{ (transformedVertex.x / transformedVertex.w) * (m_resolution.Width / 2.0f) +
+            (m_resolution.Width / 2.0f) };
+        auto screenY{ (transformedVertex.y / transformedVertex.w) * (m_resolution.Height / 2.0f) +
+            (m_resolution.Height / 2.0f) };
+
+        SPDLOG_INFO("Screen space: {}, {}", screenX, screenY);
+
+        DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
     }
 }

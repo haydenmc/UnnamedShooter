@@ -11,6 +11,7 @@ struct SimulationState
 
 struct Simulation
 {
+    Simulation();
     SimulationState const& Update(InputState const& inputState);
 private:
     std::chrono::high_resolution_clock::time_point m_lastUpdate{

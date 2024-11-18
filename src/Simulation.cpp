@@ -1,5 +1,11 @@
 #include <pch.h>
+#include "Entities/CubeEntity.h"
 #include "Simulation.h"
+
+Simulation::Simulation()
+{
+    m_simulationState.RootWorldEntity.MakeChild<CubeEntity>();
+}
 
 SimulationState const& Simulation::Update(InputState const& inputState)
 {

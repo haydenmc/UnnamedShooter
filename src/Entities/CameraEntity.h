@@ -3,5 +3,5 @@
 
 struct CameraEntity : Entity
 {
-private:
+    CameraEntity();
 };

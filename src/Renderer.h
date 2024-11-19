@@ -21,6 +21,7 @@ private:
     void ClearBuffer(uint32_t color);
     void DrawPixel(uint16_t x, uint16_t y, uint32_t color);
     void DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint32_t color);
+    void DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color);
     void DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t color);
     void DrawScene(CameraEntity const* cameraEntity, Entity const* sceneEntity);
     void DrawEntityTreeMeshes(glm::mat4 const& viewMatrix, Entity const* rootEntity);

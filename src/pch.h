@@ -34,3 +34,7 @@
 
 // FPM
 #include <fpm/fixed.hpp>
+#include <fpm/math.hpp>
+
+// Types
+#include "Types.h"

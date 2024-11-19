@@ -6,7 +6,7 @@
 namespace
 {
     constexpr fpm::fixed_16_16 c_zero { 0 };
-    constexpr uint32_t c_defaultBackgroundColor{ 0xFFFF0000 };
+    constexpr uint32_t c_defaultBackgroundColor{ 0xFF000000 };
     constexpr float c_defaultFovRads{ 3.14159265f / 2.0f };
     constexpr float c_nearPlane{ 0.1f };
     constexpr float c_farPlane{ 100.0f };
@@ -105,6 +105,31 @@ void Renderer::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
     }
 }
 
+void Renderer::DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color)
+{
+    std::array<FixedUnit, 2> fixedA{ FixedUnit{ a.x } + FixedUnit{ 0.5f },
+        FixedUnit{ a.y } + FixedUnit{ 0.5f } };
+    std::array<FixedUnit, 2> fixedB{ FixedUnit{ b.x } + FixedUnit{ 0.5f },
+        FixedUnit{ b.y } + FixedUnit{ 0.5f } };
+
+    FixedUnit deltaX{ fixedB.at(0) - fixedA.at(0) };
+    FixedUnit deltaY{ fixedB.at(1) - fixedA.at(1) };
+    FixedUnit sideLength{ fpm::abs(deltaX) >= fpm::abs(deltaY) ?
+        fpm::abs(deltaX) : fpm::abs(deltaY) };
+
+    FixedUnit xIncrement{ deltaX / sideLength };
+    FixedUnit yIncrement{ deltaY / sideLength };
+
+    FixedUnit currentX{ fixedA.at(0) };
+    FixedUnit currentY{ fixedA.at(1) };
+    for (uint16_t i{ 0 }; i <= static_cast<uint16_t>(sideLength); ++i)
+    {
+        DrawPixel(static_cast<uint16_t>(currentX), static_cast<uint16_t>(currentY), color);
+        currentX += xIncrement;
+        currentY += yIncrement;
+    }
+}
+
 void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t color)
 {
     // Confirm vertices are provided in counter-clockwise order
@@ -186,18 +211,40 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
 
     for (const auto& vertex : mesh->Vertices)
     {
-        //auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * vertex };
-        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * vertex };
-        SPDLOG_INFO("Transformed vertex: {}, {}, {}, {}", transformedVertex.x,
-            transformedVertex.y, transformedVertex.z, transformedVertex.w);
-
+        glm::vec4 v{ vertex.x, vertex.y, vertex.z, 1.0f };
+        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * v };
         auto screenX{ (transformedVertex.x / transformedVertex.w) * (m_resolution.Width / 2.0f) +
             (m_resolution.Width / 2.0f) };
         auto screenY{ (transformedVertex.y / transformedVertex.w) * (m_resolution.Height / 2.0f) +
             (m_resolution.Height / 2.0f) };
-
-        SPDLOG_INFO("Screen space: {}, {}", screenX, screenY);
-
         DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
+    }
+
+    for (const auto& face : mesh->Faces)
+    {
+        std::array<glm::vec3, 3> faceVertices{
+            mesh->Vertices.at(face.MeshVertexIndices.at(0)),
+            mesh->Vertices.at(face.MeshVertexIndices.at(1)),
+            mesh->Vertices.at(face.MeshVertexIndices.at(2)),
+        };
+
+        std::array<glm::vec4, 3> transformedVertices{
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(0).x, faceVertices.at(0).y, faceVertices.at(0).z, 1.0f },
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(1).x, faceVertices.at(1).y, faceVertices.at(1).z, 1.0f },
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(2).x, faceVertices.at(2).y, faceVertices.at(2).z, 1.0f },
+        };
+
+        std::array<glm::vec2, 3> screenSpaceCoordinates{
+            glm::vec2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(0).y / transformedVertices.at(0).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+            glm::vec2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(1).y / transformedVertices.at(1).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+            glm::vec2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(2).y / transformedVertices.at(2).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+        };
+
+        DrawLine(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), 0xFF00FF00);
+        DrawLine(screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FF00);
+        DrawLine(screenSpaceCoordinates.at(2), screenSpaceCoordinates.at(0), 0xFF00FF00);
     }
 }

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <initializer_list>
 #include <memory>
 #include <span>
 #include <string>
@@ -14,6 +15,7 @@
 // Windows
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #endif
 
@@ -25,16 +27,10 @@
 #include <SDL.h>
 #include "Utility/SDLWrappers.h"
 
-// GLM
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/transform.hpp>
-
 // FPM
 #include <fpm/fixed.hpp>
 #include <fpm/math.hpp>
 
-// Types
+// Custom headers
 #include "Types.h"
+#include "MathTypes.h"

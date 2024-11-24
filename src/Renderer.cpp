@@ -14,8 +14,9 @@ namespace
     SDLRendererPtr CreateRenderer(SDL_Window* window)
     {
         SPDLOG_INFO("Creating SDL Renderer");
-        SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
         CheckSdlPtr(renderer);
+        CheckSdlReturn(SDL_RenderSetIntegerScale(renderer, SDL_TRUE));
         return SDLRendererPtr{ renderer };
     }
 
@@ -28,14 +29,15 @@ namespace
         return SDLTexturePtr{ texture };
     }
 
-    glm::mat4 CreatePerspectiveMatrix(float fovYRads, float width, float height,
+    Matrix4x4 CreatePerspectiveMatrix(float fovYRads, float width, float height,
         float nearPlane, float farPlane)
     {
-        return glm::perspectiveFovLH_ZO(fovYRads, width, height, nearPlane, farPlane);
+        return Matrix4x4::PerspectiveProjection(FixedUnit{ fovYRads }, FixedUnit{ height / width },
+            FixedUnit{ nearPlane }, FixedUnit{ farPlane });
     }
 
-    fpm::fixed_16_16 TriangleDeterminant(FixedPoint2D pointA, FixedPoint2D pointB,
-        FixedPoint2D pointC)
+    FixedUnit TriangleDeterminant(Vector2 pointA,
+        Vector2 pointB, Vector2 pointC)
     {
         const auto ab{ pointB - pointA };
         const auto ac{ pointC - pointA };
@@ -43,12 +45,11 @@ namespace
         return ((ab.y * ac.x) - (ab.x * ac.y));
     }
 
-    bool IsTriangleEdgeLeftOrTop(FixedPoint2D pointA, FixedPoint2D pointB)
+    bool IsTriangleEdgeLeftOrTop(Vector2 pointA, Vector2 pointB)
     {
         const auto edge{ pointB - pointA };
-        const bool isLeftEdge{ edge.y > fpm::fixed_16_16{ 0 } };
-        const bool isTopEdge{ (edge.y == fpm::fixed_16_16{ 0 }) &&
-            (edge.x < fpm::fixed_16_16{ 0 }) };
+        const bool isLeftEdge{ edge.y > FixedUnit{ 0 } };
+        const bool isTopEdge{ (edge.y == FixedUnit{ 0 }) && (edge.x < FixedUnit{ 0 }) };
         return (isLeftEdge || isTopEdge);
     }
 }
@@ -105,7 +106,7 @@ void Renderer::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
     }
 }
 
-void Renderer::DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color)
+void Renderer::DrawLine(Vector2 a, Vector2 b, uint32_t color)
 {
     std::array<FixedUnit, 2> fixedA{ FixedUnit{ a.x } + FixedUnit{ 0.5f },
         FixedUnit{ a.y } + FixedUnit{ 0.5f } };
@@ -130,32 +131,43 @@ void Renderer::DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color)
     }
 }
 
-void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t color)
+void Renderer::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
 {
+    // First, convert points to fixed-point values such that we have consistent precision
+    // between mathematical operations. Otherwise, differences in precision can appear as visual
+    // artifacts between triangle edges.
+    Vector2 fixedA{ FixedUnit{ a.x }, FixedUnit{ a.y } };
+    Vector2 fixedB{ FixedUnit{ b.x }, FixedUnit{ b.y } };
+    Vector2 fixedC{ FixedUnit{ c.x }, FixedUnit{ c.y } };
+
     // Confirm vertices are provided in counter-clockwise order
-    if (TriangleDeterminant(a, b, c) <= c_zero)
+    if (TriangleDeterminant(fixedA, fixedB, fixedC) <= c_zero)
     {
-        SPDLOG_WARN("Invalid winding order of triangle vertices ({},{}), ({},{}), ({},{})",
-            a.x, a.y, b.x, b.y, c.x, c.y);
+        // SPDLOG_WARN("Invalid winding order of triangle vertices ({},{}), ({},{}), ({},{})",
+        //     a.x, a.y, b.x, b.y, c.x, c.y);
         return;
     }
 
     // Simple rasterization - test every pixel of the rectangular boundary
     // surrounding the triangle and fill the points "inside" the triangle edges
-    const auto xMin = std::min(a.x, std::min(b.x, c.x));
-    const auto yMin = std::min(a.y, std::min(b.y, c.y));
-    const auto xMax = std::max(a.x, std::max(b.x, c.x));
-    const auto yMax = std::max(a.y, std::max(b.y, c.y));
+    const auto xMin = static_cast<uint32_t>(fpm::floor(std::min(fixedA.x,
+        std::min(fixedB.x, fixedC.x))));
+    const auto yMin = static_cast<uint32_t>(fpm::floor(std::min(fixedA.y,
+        std::min(fixedB.y, fixedC.y))));
+    const auto xMax = static_cast<uint32_t>(fpm::ceil(std::max(fixedA.x,
+        std::max(fixedB.x, fixedC.x))));
+    const auto yMax = static_cast<uint32_t>(fpm::ceil(std::max(fixedA.y,
+        std::max(fixedB.y, fixedC.y))));
     for (auto y{ yMin }; y <= yMax; ++y)
     {
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            IntPoint2D point{ x, y };
+            Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
 
-            glm::vec<3, fpm::fixed_16_16> edges{
-                TriangleDeterminant(b, c, point),
-                TriangleDeterminant(c, a, point),
-                TriangleDeterminant(a, b, point)
+            Vector3 edges{
+                TriangleDeterminant(fixedB, fixedC, point),
+                TriangleDeterminant(fixedC, fixedA, point),
+                TriangleDeterminant(fixedA, fixedB, point)
             };
 
             // Apply top-left edge rule
@@ -174,7 +186,7 @@ void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t c
             
             if ((edges.x >= c_zero) && (edges.y >= c_zero) && (edges.z >= c_zero))
             {
-                DrawPixel(point.x, point.y, color);
+                DrawPixel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), color);
             }
         }
     }
@@ -184,12 +196,13 @@ void Renderer::DrawScene(CameraEntity const *cameraEntity, Entity const *sceneEn
 {
     // Calculate view/camera matrix
     // TODO: Respect camera rotation
-    auto viewMatrix{ glm::lookAtLH(cameraEntity->GetPosition(), glm::vec3{ 0.0f, 0.0f, 1.0f },
-        glm::vec3{ 0.0f, 1.0f, 0.0f } ) };
+    auto viewMatrix{ Matrix4x4::LookAt(cameraEntity->GetPosition(),
+        Vector3{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 1 } },
+        Vector3{ FixedUnit{ 0 }, FixedUnit{ 1 }, FixedUnit{ 0 } }) };
     DrawEntityTreeMeshes(viewMatrix, sceneEntity);
 }
 
-void Renderer::DrawEntityTreeMeshes(glm::mat4 const& viewMatrix, Entity const* rootEntity)
+void Renderer::DrawEntityTreeMeshes(Matrix4x4 const& viewMatrix, Entity const* rootEntity)
 {
     for (const auto& child : rootEntity->GetChildren())
     {
@@ -201,25 +214,28 @@ void Renderer::DrawEntityTreeMeshes(glm::mat4 const& viewMatrix, Entity const* r
     }
 }
 
-void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity, Mesh const *mesh)
+void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity, Mesh const *mesh)
 {
     // First apply entity transformations
-    glm::mat4 entityTransform{ glm::translate(entity->GetPosition()) };
-    auto entityRotation{ entity->GetRotation() };
-    entityTransform *= glm::eulerAngleXYZ(entityRotation.x, entityRotation.y,
-        entityRotation.z);
+    auto entityTranslate{ Matrix4x4::Translation(entity->GetPosition()) };
+    auto entityRotate { Matrix4x4::EulerRotation(entity->GetRotation()) };
 
+    // Vertex points
+#if TRUE
     for (const auto& vertex : mesh->Vertices)
     {
-        glm::vec4 v{ vertex.x, vertex.y, vertex.z, 1.0f };
-        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTransform * v };
-        auto screenX{ (transformedVertex.x / transformedVertex.w) * (m_resolution.Width / 2.0f) +
-            (m_resolution.Width / 2.0f) };
-        auto screenY{ (transformedVertex.y / transformedVertex.w) * (m_resolution.Height / 2.0f) +
-            (m_resolution.Height / 2.0f) };
+        Vector4 v{ vertex.x, vertex.y, vertex.z, FixedUnit{ 1 } };
+        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
+        auto screenX{ (transformedVertex.x / transformedVertex.w) * FixedUnit{ m_resolution.Width / 2.0f } +
+            FixedUnit{ m_resolution.Width / 2.0f } + FixedUnit{ 0.5f } };
+        auto screenY{ (transformedVertex.y / transformedVertex.w) * FixedUnit{ m_resolution.Height / 2.0f } +
+            FixedUnit{ m_resolution.Height / 2.0f } + FixedUnit{ 0.5f } };
         DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
     }
+#endif
 
+    // Wireframe
+#if FALSE
     for (const auto& face : mesh->Faces)
     {
         std::array<glm::vec3, 3> faceVertices{
@@ -234,12 +250,12 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
             m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(2).x, faceVertices.at(2).y, faceVertices.at(2).z, 1.0f },
         };
 
-        std::array<glm::vec2, 3> screenSpaceCoordinates{
-            glm::vec2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+        std::array<Vector2, 3> screenSpaceCoordinates{
+            Vector2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
                 (transformedVertices.at(0).y / transformedVertices.at(0).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
-            glm::vec2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+            Vector2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
                 (transformedVertices.at(1).y / transformedVertices.at(1).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
-            glm::vec2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+            Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
                 (transformedVertices.at(2).y / transformedVertices.at(2).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
         };
 
@@ -247,4 +263,33 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
         DrawLine(screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FF00);
         DrawLine(screenSpaceCoordinates.at(2), screenSpaceCoordinates.at(0), 0xFF00FF00);
     }
+#endif
+
+    // Shaded
+#if FALSE
+    for (const auto& face : mesh->Faces)
+    {
+        const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
+        const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
+        const auto& pointC{ mesh->Vertices.at(face.MeshVertexIndices.at(2)) };
+
+        std::array<Vector4, 3> transformedVertices{
+            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointA.x, pointA.y, pointA.z, FixedUnit{ 1 } },
+            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointB.x, pointB.y, pointB.z, FixedUnit{ 1 } },
+            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointC.x, pointC.y, pointC.z, FixedUnit{ 1 } },
+        };
+        FixedUnit halfWidth{ m_resolution.Width / 2.0f };
+        FixedUnit halfHeight{ m_resolution.Height / 2.0f };
+        std::array<Vector2, 3> screenSpaceCoordinates{
+            Vector2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * halfWidth + halfWidth,
+                (transformedVertices.at(0).y / transformedVertices.at(0).w) * halfHeight + halfHeight },
+            Vector2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * halfWidth + halfWidth,
+                (transformedVertices.at(1).y / transformedVertices.at(1).w) * halfHeight + halfHeight },
+            Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * halfWidth + halfWidth,
+                (transformedVertices.at(2).y / transformedVertices.at(2).w) * halfHeight + halfHeight },
+        };
+
+        DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FFFF);
+    }
+#endif
 }

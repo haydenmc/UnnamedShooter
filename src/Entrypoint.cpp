@@ -65,7 +65,7 @@ catch (std::exception const& e)
 }
 #endif
 
-int main(int argumentsCount, char* arguments[])
+int main(int /* argumentsCount */, char* /*arguments*/[])
 {
     SPDLOG_INFO("main");
     // TODO: Parse arguments
@@ -73,7 +73,8 @@ int main(int argumentsCount, char* arguments[])
 }
 
 #ifdef _WIN32
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/,
+    LPSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
     SPDLOG_INFO("WinMain");
     // TODO: Parse arguments

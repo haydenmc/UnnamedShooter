@@ -9,7 +9,7 @@ struct MeshFace
 
 struct Mesh
 {
-    std::vector<glm::vec3> Vertices;
+    std::vector<Vector3> Vertices;
     std::vector<MeshFace> Faces;
     // glm::vec3 Rotation;
     // glm::vec3 Scale;

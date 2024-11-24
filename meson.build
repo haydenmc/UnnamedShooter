@@ -31,39 +31,19 @@ sdl2_wrap = subproject('sdl2',
         'werror=false',
         'warning_level=1',
     ])
-glm_wrap = subproject('glm',
-    default_options: [
-        'cpp_std=c++20',
-        'werror=false',
-        'warning_level=1',
-    ])
 fpm_wrap = subproject('fpm',
     default_options: [
         'cpp_std=c++20',
         'werror=false',
         'warning_level=1',
     ])
-
-# Source files
-sources = [
-    'src/Configuration.cpp',
-    'src/Display.cpp',
-    'src/Entrypoint.cpp',
-    'src/Input.cpp',
-    'src/Mesh.cpp',
-    'src/Renderer.cpp',
-    'src/Simulation.cpp',
-    'src/Entities/CameraEntity.cpp',
-]
-
-# Dependencies
-dependencies = [
-    dependency('fmt'),
-    dependency('spdlog'),
-    dependency('sdl2'),
-    dependency('glm'),
-    dependency('fpm'),
-]
+catch2_wrap = subproject('catch2',
+    default_options: [
+        'cpp_std=c++20',
+        'tests=false',
+        'werror=false',
+        'warning_level=1',
+    ])
 
 # Subsystem for Windows
 # This determines whether the process starts with a console window ('console')
@@ -80,10 +60,43 @@ else
 endif
 
 executable(meson.project_name(),
-    dependencies: dependencies,
     cpp_pch: 'src/pch.h',
+    dependencies: [
+        dependency('fmt'),
+        dependency('spdlog'),
+        dependency('sdl2'),
+        dependency('fpm'),
+    ],
     include_directories: [
         'src',
     ],
-    sources: sources,
+    sources: [
+        'src/Configuration.cpp',
+        'src/Display.cpp',
+        'src/Entrypoint.cpp',
+        'src/Input.cpp',
+        'src/Mesh.cpp',
+        'src/Renderer.cpp',
+        'src/Simulation.cpp',
+        'src/Entities/CameraEntity.cpp',
+    ],
     win_subsystem: win_subsystem)
+
+tests_exe = executable(meson.project_name() + '.tests',
+    cpp_pch: 'test/testpch.h',
+    dependencies: [
+        dependency('fmt'),
+        dependency('spdlog'),
+        dependency('sdl2'),
+        dependency('fpm'),
+        dependency('catch2-with-main'),
+    ],
+    include_directories: [
+        'test',
+        'src',
+    ],
+    sources: [
+        'test/MathTests.cpp',
+    ])
+
+test('tests', tests_exe)

@@ -16,15 +16,15 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
 
 std::shared_ptr<Mesh> Mesh::Cube()
 {
-    std::vector<glm::vec3> vertices{
-        glm::vec3{  1.0f, -1.0f, -1.0f },
-        glm::vec3{  1.0f, -1.0f,  1.0f },
-        glm::vec3{ -1.0f, -1.0f,  1.0f },
-        glm::vec3{ -1.0f, -1.0f, -1.0f },
-        glm::vec3{  1.0f,  1.0f, -1.0f },
-        glm::vec3{  1.0f,  1.0f,  1.0f },
-        glm::vec3{ -1.0f,  1.0f,  1.0f },
-        glm::vec3{ -1.0f,  1.0f, -1.0f },
+    std::vector<Vector3> vertices{
+        Vector3{ FixedUnit{  1 }, FixedUnit{ -1 }, FixedUnit{ -1 } },
+        Vector3{ FixedUnit{  1 }, FixedUnit{ -1 }, FixedUnit{  1 } },
+        Vector3{ FixedUnit{ -1 }, FixedUnit{ -1 }, FixedUnit{  1 } },
+        Vector3{ FixedUnit{ -1 }, FixedUnit{ -1 }, FixedUnit{ -1 } },
+        Vector3{ FixedUnit{  1 }, FixedUnit{  1 }, FixedUnit{ -1 } },
+        Vector3{ FixedUnit{  1 }, FixedUnit{  1 }, FixedUnit{  1 } },
+        Vector3{ FixedUnit{ -1 }, FixedUnit{  1 }, FixedUnit{  1 } },
+        Vector3{ FixedUnit{ -1 }, FixedUnit{  1 }, FixedUnit{ -1 } },
     };
     std::vector<MeshFace> faces{
         // TOP

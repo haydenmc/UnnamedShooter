@@ -21,12 +21,12 @@ struct Entity
         return m_meshes;
     }
 
-    glm::vec3 const& GetPosition() const
+    Vector3 const& GetPosition() const
     {
         return m_position;
     }
 
-    glm::vec3 const& GetRotation() const
+    Vector3 const& GetRotation() const
     {
         return m_rotation;
     }
@@ -42,6 +42,6 @@ struct Entity
 protected:
     std::vector<std::unique_ptr<Entity>> m_childEntities;
     std::vector<std::shared_ptr<Mesh>> m_meshes;
-    glm::vec3 m_position{ 0.0f, 0.0f, 0.0f };
-    glm::vec3 m_rotation{ 0.0f, 0.0f, 0.0f };
+    Vector3 m_position{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 0 } };
+    Vector3 m_rotation{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 0 } };
 };

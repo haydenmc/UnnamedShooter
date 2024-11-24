@@ -12,15 +12,15 @@ private:
     SDLRendererPtr const m_renderer;
     std::vector<uint32_t> m_frameBuffer;
     SDLTexturePtr const m_frameBufferTexture;
-    glm::mat4 const m_projectionMatrix;
+    Matrix4x4 const m_projectionMatrix;
 
     void ClearBuffer();
     void ClearBuffer(uint32_t color);
     void DrawPixel(uint16_t x, uint16_t y, uint32_t color);
     void DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint32_t color);
-    void DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color);
-    void DrawTriangle(glm::vec2 a, glm::vec2 b, glm::vec2 c, uint32_t color);
+    void DrawLine(Vector2 a, Vector2 b, uint32_t color);
+    void DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color);
     void DrawScene(CameraEntity const* cameraEntity, Entity const* sceneEntity);
-    void DrawEntityTreeMeshes(glm::mat4 const& viewMatrix, Entity const* rootEntity);
-    void DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity, Mesh const* mesh);
+    void DrawEntityTreeMeshes(Matrix4x4 const& viewMatrix, Entity const* rootEntity);
+    void DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity, Mesh const* mesh);
 };

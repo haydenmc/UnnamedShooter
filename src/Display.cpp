@@ -5,7 +5,7 @@ namespace
 {
     std::shared_ptr<SDL_Window> CreateSDLWindow(VideoConfiguration configuration)
     {
-        SPDLOG_INFO("Initializing SDL");
+        SPDLOG_INFO("Initializing SDL video subsystem");
         CheckSdlReturn(SDL_InitSubSystem(SDL_INIT_VIDEO));
 
         SPDLOG_INFO("Creating {}x{} window", configuration.Width, configuration.Height);

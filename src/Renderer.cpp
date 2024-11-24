@@ -14,8 +14,9 @@ namespace
     SDLRendererPtr CreateRenderer(SDL_Window* window)
     {
         SPDLOG_INFO("Creating SDL Renderer");
-        SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
         CheckSdlPtr(renderer);
+        CheckSdlReturn(SDL_RenderSetIntegerScale(renderer, SDL_TRUE));
         return SDLRendererPtr{ renderer };
     }
 
@@ -34,8 +35,8 @@ namespace
         return glm::perspectiveFovLH_ZO(fovYRads, width, height, nearPlane, farPlane);
     }
 
-    fpm::fixed_16_16 TriangleDeterminant(FixedPoint2D pointA, FixedPoint2D pointB,
-        FixedPoint2D pointC)
+    FixedUnit TriangleDeterminant(glm::vec<2, FixedUnit> pointA,
+        glm::vec<2, FixedUnit> pointB, glm::vec<2, FixedUnit> pointC)
     {
         const auto ab{ pointB - pointA };
         const auto ac{ pointC - pointA };
@@ -43,12 +44,11 @@ namespace
         return ((ab.y * ac.x) - (ab.x * ac.y));
     }
 
-    bool IsTriangleEdgeLeftOrTop(FixedPoint2D pointA, FixedPoint2D pointB)
+    bool IsTriangleEdgeLeftOrTop(glm::vec<2, FixedUnit> pointA, glm::vec<2, FixedUnit> pointB)
     {
         const auto edge{ pointB - pointA };
-        const bool isLeftEdge{ edge.y > fpm::fixed_16_16{ 0 } };
-        const bool isTopEdge{ (edge.y == fpm::fixed_16_16{ 0 }) &&
-            (edge.x < fpm::fixed_16_16{ 0 }) };
+        const bool isLeftEdge{ edge.y > FixedUnit{ 0 } };
+        const bool isTopEdge{ (edge.y == FixedUnit{ 0 }) && (edge.x < FixedUnit{ 0 }) };
         return (isLeftEdge || isTopEdge);
     }
 }
@@ -130,10 +130,17 @@ void Renderer::DrawLine(glm::vec2 a, glm::vec2 b, uint32_t color)
     }
 }
 
-void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t color)
+void Renderer::DrawTriangle(glm::vec2 a, glm::vec2 b, glm::vec2 c, uint32_t color)
 {
+    // First, convert points to fixed-point values such that we have consistent precision
+    // between mathematical operations. Otherwise, differences in precision can appear as visual
+    // artifacts between triangle edges.
+    glm::vec<2, FixedUnit> fixedA{ FixedUnit{ a.x }, FixedUnit{ a.y } };
+    glm::vec<2, FixedUnit> fixedB{ FixedUnit{ b.x }, FixedUnit{ b.y } };
+    glm::vec<2, FixedUnit> fixedC{ FixedUnit{ c.x }, FixedUnit{ c.y } };
+
     // Confirm vertices are provided in counter-clockwise order
-    if (TriangleDeterminant(a, b, c) <= c_zero)
+    if (TriangleDeterminant(fixedA, fixedB, fixedC) <= c_zero)
     {
         SPDLOG_WARN("Invalid winding order of triangle vertices ({},{}), ({},{}), ({},{})",
             a.x, a.y, b.x, b.y, c.x, c.y);
@@ -142,20 +149,24 @@ void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t c
 
     // Simple rasterization - test every pixel of the rectangular boundary
     // surrounding the triangle and fill the points "inside" the triangle edges
-    const auto xMin = std::min(a.x, std::min(b.x, c.x));
-    const auto yMin = std::min(a.y, std::min(b.y, c.y));
-    const auto xMax = std::max(a.x, std::max(b.x, c.x));
-    const auto yMax = std::max(a.y, std::max(b.y, c.y));
+    const auto xMin = static_cast<uint32_t>(fpm::floor(std::min(fixedA.x,
+        std::min(fixedB.x, fixedC.x))));
+    const auto yMin = static_cast<uint32_t>(fpm::floor(std::min(fixedA.y,
+        std::min(fixedB.y, fixedC.y))));
+    const auto xMax = static_cast<uint32_t>(fpm::ceil(std::max(fixedA.x,
+        std::max(fixedB.x, fixedC.x))));
+    const auto yMax = static_cast<uint32_t>(fpm::ceil(std::max(fixedA.y,
+        std::max(fixedB.y, fixedC.y))));
     for (auto y{ yMin }; y <= yMax; ++y)
     {
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            IntPoint2D point{ x, y };
+            glm::vec<2, FixedUnit> point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
 
-            glm::vec<3, fpm::fixed_16_16> edges{
-                TriangleDeterminant(b, c, point),
-                TriangleDeterminant(c, a, point),
-                TriangleDeterminant(a, b, point)
+            glm::vec<3, FixedUnit> edges{
+                TriangleDeterminant(fixedB, fixedC, point),
+                TriangleDeterminant(fixedC, fixedA, point),
+                TriangleDeterminant(fixedA, fixedB, point)
             };
 
             // Apply top-left edge rule
@@ -174,7 +185,7 @@ void Renderer::DrawTriangle(IntPoint2D a, IntPoint2D b, IntPoint2D c, uint32_t c
             
             if ((edges.x >= c_zero) && (edges.y >= c_zero) && (edges.z >= c_zero))
             {
-                DrawPixel(point.x, point.y, color);
+                DrawPixel(x, y, color);
             }
         }
     }
@@ -209,6 +220,8 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
     entityTransform *= glm::eulerAngleXYZ(entityRotation.x, entityRotation.y,
         entityRotation.z);
 
+    // Vertex points
+#if FALSE
     for (const auto& vertex : mesh->Vertices)
     {
         glm::vec4 v{ vertex.x, vertex.y, vertex.z, 1.0f };
@@ -219,7 +232,10 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
             (m_resolution.Height / 2.0f) };
         DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
     }
+#endif
 
+    // Wireframe
+#if FALSE
     for (const auto& face : mesh->Faces)
     {
         std::array<glm::vec3, 3> faceVertices{
@@ -246,5 +262,31 @@ void Renderer::DrawEntityMesh(glm::mat4 const& viewMatrix, Entity const* entity,
         DrawLine(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), 0xFF00FF00);
         DrawLine(screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FF00);
         DrawLine(screenSpaceCoordinates.at(2), screenSpaceCoordinates.at(0), 0xFF00FF00);
+    }
+#endif
+
+    // Shaded
+    for (const auto& face : mesh->Faces)
+    {
+        const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
+        const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
+        const auto& pointC{ mesh->Vertices.at(face.MeshVertexIndices.at(2)) };
+
+        std::array<glm::vec4, 3> transformedVertices{
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ pointA.x, pointA.y, pointA.z, 1.0f },
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ pointB.x, pointB.y, pointB.z, 1.0f },
+            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ pointC.x, pointC.y, pointC.z, 1.0f },
+        };
+
+        std::array<glm::vec2, 3> screenSpaceCoordinates{
+            glm::vec2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(0).y / transformedVertices.at(0).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+            glm::vec2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(1).y / transformedVertices.at(1).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+            glm::vec2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
+                (transformedVertices.at(2).y / transformedVertices.at(2).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
+        };
+
+        DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FFFF);
     }
 }

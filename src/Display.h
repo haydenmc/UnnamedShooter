@@ -1,6 +1,6 @@
 #pragma once
 #include "Configuration.h"
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
 
 struct Display
 {

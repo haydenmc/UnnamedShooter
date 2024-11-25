@@ -76,7 +76,8 @@ executable(meson.project_name(),
         'src/Entrypoint.cpp',
         'src/Input.cpp',
         'src/Mesh.cpp',
-        'src/Renderer.cpp',
+        'src/Renderer/RenderTarget.cpp',
+        'src/Renderer/Renderer.cpp',
         'src/Simulation.cpp',
         'src/Entities/CameraEntity.cpp',
     ],
@@ -96,7 +97,11 @@ tests_exe = executable(meson.project_name() + '.tests',
         'src',
     ],
     sources: [
+        # Test definitions
         'test/MathTests.cpp',
+        'test/RenderTests.cpp',
+        # Sources under test
+        'src/Renderer/RenderTarget.cpp',
     ])
 
 test('tests', tests_exe)

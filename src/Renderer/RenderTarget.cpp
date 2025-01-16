@@ -107,6 +107,7 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
     {
         for (auto x{ xMin }; x <= xMax; ++x)
         {
+            // SPDLOG_DEBUG("Testing point {}, {}", x, y);
             Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
 
             Vector3 edges{
@@ -114,25 +115,36 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
                 TriangleDeterminant(c, a, point),
                 TriangleDeterminant(a, b, point)
             };
+            // SPDLOG_DEBUG("\tBC determinant: {}", static_cast<float>(edges.x));
+            // SPDLOG_DEBUG("\tCA determinant: {}", static_cast<float>(edges.y));
+            // SPDLOG_DEBUG("\tAB determinant: {}", static_cast<float>(edges.z));
 
             // Apply top-left edge rule
             if (IsTriangleEdgeLeftOrTop(b, c))
             {
-                edges.x -= 1;
+                //SPDLOG_DEBUG("\tBC is top/left edge.");
+                // SPDLOG_DEBUG("epsilon value {}", static_cast<float>(std::numeric_limits<FixedUnit>::epsilon()));
+                edges.x -= std::numeric_limits<FixedUnit>::epsilon();
             }
             if (IsTriangleEdgeLeftOrTop(c, a))
             {
-                edges.y -= 1;
+                //SPDLOG_DEBUG("\tCA is top/left edge.");
+                edges.y -= std::numeric_limits<FixedUnit>::epsilon();
             }
             if (IsTriangleEdgeLeftOrTop(a, b))
             {
-                edges.z -= 1;
+                //SPDLOG_DEBUG("\tAB is top/left edge.");
+                edges.z -= std::numeric_limits<FixedUnit>::epsilon();
             }
             
             if ((edges.x >= FixedUnit{ 0 }) && (edges.y >= FixedUnit{ 0 }) &&
                 (edges.z >= FixedUnit{ 0 }))
             {
                 DrawPixel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), color);
+            }
+            else
+            {
+                //SPDLOG_DEBUG("\tSkipping pixel");
             }
         }
     }

@@ -20,6 +20,9 @@
 #endif
 
 // Spdlog
+#ifdef DEBUG
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
+#endif
 #include <spdlog/spdlog.h>
 
 // SDL

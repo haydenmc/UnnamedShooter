@@ -7,6 +7,7 @@ struct CubeEntity : public Entity
     CubeEntity()
     {
         m_meshes.push_back(Mesh::Cube());
+        //m_meshes.push_back(Mesh::AdjoiningTriangles());
     }
 
     virtual void Update(std::chrono::microseconds deltaTime, InputState const& input) override

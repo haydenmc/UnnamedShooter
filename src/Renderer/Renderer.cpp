@@ -49,7 +49,33 @@ void Renderer::Render(SimulationState const& simulationState)
     // Draw
     // DrawTriangle({ 64, 32 }, { 32, 64 }, { 96, 64 }, 0xFF0000FF);
     // DrawTriangle({ 128, 32 }, { 64, 32 }, { 96, 64 }, 0xFF00FFFF);
+    // m_frameBuffer.DrawTriangle(
+    //     Vector2{ FixedUnit{ 4 }, FixedUnit { 1 } }, //A
+    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 1 } }, //B
+    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 4 } }, //C
+    //     0xFFFF0000);
+
+    // m_frameBuffer.DrawTriangle(
+    //     Vector2{ FixedUnit{ 5 }, FixedUnit { 5 } }, //D
+    //     Vector2{ FixedUnit{ 4 }, FixedUnit { 1 } }, //A
+    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 4 } }, //C
+    //     0xFF00FF00);
+
+
+    // m_frameBuffer.DrawTriangle(
+    //     Vector2{ FixedUnit{ 140 }, FixedUnit { 100 } }, //A
+    //     Vector2{ FixedUnit{ 140 }, FixedUnit { 40 } }, //B
+    //     Vector2{ FixedUnit{ 80 }, FixedUnit { 40 } }, //C
+    //     0xFF00FF00);
+
+    // // m_frameBuffer.DrawTriangle(
+    // //     Vector2{ FixedUnit{ 140 }, FixedUnit { 100 } }, //A
+    // //     Vector2{ FixedUnit{ 80 }, FixedUnit { 40 } }, //C
+    // //     Vector2{ FixedUnit{ 50 }, FixedUnit { 90 } }, //C
+    // //     0xFF0000FF);
+
     DrawScene(&simulationState.Camera, &simulationState.RootWorldEntity);
+    
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr,
         m_frameBuffer.Buffer.data(), (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
@@ -152,7 +178,10 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
             Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * halfWidth + halfWidth,
                 (transformedVertices.at(2).y / transformedVertices.at(2).w) * halfHeight + halfHeight },
         };
-
+        // SPDLOG_DEBUG("Triangle @ ({},{}), ({},{}), ({},{})",
+        //     static_cast<float>(screenSpaceCoordinates.at(0).x),static_cast<float>(screenSpaceCoordinates.at(0).y),
+        //     static_cast<float>(screenSpaceCoordinates.at(1).x),static_cast<float>(screenSpaceCoordinates.at(1).y),
+        //     static_cast<float>(screenSpaceCoordinates.at(2).x),static_cast<float>(screenSpaceCoordinates.at(2).y));
         m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FFFF);
     }
 #endif

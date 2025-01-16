@@ -16,4 +16,5 @@ struct Mesh
 
     static std::shared_ptr<Mesh> FromObjFile(std::filesystem::path filePath);
     static std::shared_ptr<Mesh> Cube();
+    static std::shared_ptr<Mesh> AdjoiningTriangles();
 };

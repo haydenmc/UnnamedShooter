@@ -11,6 +11,10 @@ int Entrypoint(ArgList arguments)
 try // Don't catch unhandled exceptions for debug builds
 #endif
 {
+#ifdef DEBUG
+    spdlog::set_level(spdlog::level::debug);
+    SPDLOG_DEBUG("Debug logging enabled");
+#endif
     SPDLOG_INFO("Entrypoint");
 
     for (const auto& argPair : arguments)

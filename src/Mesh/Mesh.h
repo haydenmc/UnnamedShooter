@@ -3,12 +3,13 @@
 struct MeshFace
 {
     std::array<size_t, 3> MeshVertexIndices;
-    // std::array<glm::vec2, 3> VertexTextureCoordinates;
+    std::array<size_t, 3> MeshTextureCoordinateIndices;
 };
 
 struct Mesh
 {
     std::vector<Vector3> Vertices;
+    std::vector<Vector2> TextureCoordinates;
     std::vector<MeshFace> Faces;
     // glm::vec3 Rotation;
     // glm::vec3 Scale;

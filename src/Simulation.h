@@ -1,6 +1,6 @@
 #pragma once
-#include "Entities/Entity.h"
-#include "Entities/CameraEntity.h"
+#include "Entity/Entity.h"
+#include "Entity/CameraEntity.h"
 #include "Input.h"
 
 struct SimulationState

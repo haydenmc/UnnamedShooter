@@ -6,6 +6,8 @@ project('unnamed-shooter', 'cpp',
         'werror=true',
     ])
 
+fs = import('fs')
+
 # Subprojects
 fmt_wrap = subproject('fmt',
     default_options: [
@@ -75,13 +77,17 @@ executable(meson.project_name(),
         'src/Display.cpp',
         'src/Entrypoint.cpp',
         'src/Input.cpp',
-        'src/Mesh.cpp',
+        'src/Mesh/Mesh.cpp',
         'src/Renderer/RenderTarget.cpp',
         'src/Renderer/Renderer.cpp',
         'src/Simulation.cpp',
-        'src/Entities/CameraEntity.cpp',
+        'src/Entity/CameraEntity.cpp',
     ],
     win_subsystem: win_subsystem)
+
+# Copy assets
+fs.copyfile('assets/cube.obj', 'cube.obj')
+fs.copyfile('assets/f22.obj',  'f22.obj')
 
 tests_exe = executable(meson.project_name() + '.tests',
     cpp_pch: 'test/testpch.h',

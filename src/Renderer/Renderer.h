@@ -1,7 +1,7 @@
 #pragma once
-#include "Configuration.h"
+#include "../Configuration.h"
 #include "RenderTarget.h"
-#include "Simulation.h"
+#include "../Simulation.h"
 
 struct Renderer
 {

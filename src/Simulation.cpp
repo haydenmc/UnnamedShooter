@@ -1,5 +1,5 @@
 #include <pch.h>
-#include "Entities/CubeEntity.h"
+#include "Entity/CubeEntity.h"
 #include "Simulation.h"
 
 Simulation::Simulation()

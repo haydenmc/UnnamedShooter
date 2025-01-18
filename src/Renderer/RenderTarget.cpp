@@ -103,37 +103,44 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
     const auto yMin = static_cast<uint16_t>(fpm::floor(std::min(a.y, std::min(b.y, c.y))));
     const auto xMax = static_cast<uint16_t>(fpm::ceil(std::max(a.x, std::max(b.x, c.x))));
     const auto yMax = static_cast<uint16_t>(fpm::ceil(std::max(a.y, std::max(b.y, c.y))));
+
+    // Begin with pre-calculating the edge distances at the top-left point.
+    // The rest of the pixel values can be incrementally calculated from here.
+    Vector2 topLeft{ (xMin + FixedUnit{ 0.5 }), (yMin + FixedUnit{ 0.5 }) };
+    Vector3 wLeft{
+        TriangleDeterminant(b, c, topLeft),
+        TriangleDeterminant(c, a, topLeft),
+        TriangleDeterminant(a, b, topLeft) };
+    if (IsTriangleEdgeLeftOrTop(b, c))
+    {
+        wLeft.x -= std::numeric_limits<FixedUnit>::epsilon();
+    }
+    if (IsTriangleEdgeLeftOrTop(c, a))
+    {
+        wLeft.y -= std::numeric_limits<FixedUnit>::epsilon();
+    }
+    if (IsTriangleEdgeLeftOrTop(a, b))
+    {
+        wLeft.z -= std::numeric_limits<FixedUnit>::epsilon();
+    }
+    // Calculate determinant difference when moving across X axis and Y axis
+    Vector3 dwdx{ (b.y - c.y), (c.y - a.y), (a.y - b.y) };
+    Vector3 dwdy{ (b.x - c.x), (c.x - a.x), (a.x - b.x) };
+    
     for (auto y{ yMin }; y <= yMax; ++y)
     {
+        Vector3 horizontalW{ wLeft };
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
-
-            Vector3 edges{
-                TriangleDeterminant(b, c, point),
-                TriangleDeterminant(c, a, point),
-                TriangleDeterminant(a, b, point)
-            };
-
-            // Apply top-left edge rule
-            if (IsTriangleEdgeLeftOrTop(b, c))
-            {
-                edges.x -= std::numeric_limits<FixedUnit>::epsilon();
-            }
-            if (IsTriangleEdgeLeftOrTop(c, a))
-            {
-                edges.y -= std::numeric_limits<FixedUnit>::epsilon();
-            }
-            if (IsTriangleEdgeLeftOrTop(a, b))
-            {
-                edges.z -= std::numeric_limits<FixedUnit>::epsilon();
-            }
-            
-            if ((edges.x >= FixedUnit{ 0 }) && (edges.y >= FixedUnit{ 0 }) &&
-                (edges.z >= FixedUnit{ 0 }))
+            if ((horizontalW.x >= FixedUnit{ 0 }) && (horizontalW.y >= FixedUnit{ 0 }) &&
+                (horizontalW.z >= FixedUnit{ 0 }))
             {
                 DrawPixel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), color);
-            }
+            } 
+            Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
+
+            horizontalW = (horizontalW - dwdx);
         }
+        wLeft = (wLeft + dwdy);
     }
 }

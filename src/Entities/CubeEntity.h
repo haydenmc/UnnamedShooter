@@ -15,6 +15,9 @@ struct CubeEntity : public Entity
         Entity::Update(deltaTime, input);
         m_rotation.y += FixedUnit{ 0.000001f * deltaTime.count() };
         m_rotation.x += FixedUnit{ 0.000001f * deltaTime.count() };
-        m_position.z -= FixedUnit{ 0.000001f * deltaTime.count() };
+        if (m_position.z > FixedUnit{ -8 })
+        {
+            m_position.z -= FixedUnit{ 0.000001f * deltaTime.count() };
+        }
     }
 };

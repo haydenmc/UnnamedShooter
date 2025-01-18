@@ -17,34 +17,37 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
 std::shared_ptr<Mesh> Mesh::Cube()
 {
     std::vector<Vector3> vertices{
-        Vector3{ FixedUnit{  1 }, FixedUnit{ -1 }, FixedUnit{ -1 } },
-        Vector3{ FixedUnit{  1 }, FixedUnit{ -1 }, FixedUnit{  1 } },
-        Vector3{ FixedUnit{ -1 }, FixedUnit{ -1 }, FixedUnit{  1 } },
-        Vector3{ FixedUnit{ -1 }, FixedUnit{ -1 }, FixedUnit{ -1 } },
-        Vector3{ FixedUnit{  1 }, FixedUnit{  1 }, FixedUnit{ -1 } },
-        Vector3{ FixedUnit{  1 }, FixedUnit{  1 }, FixedUnit{  1 } },
-        Vector3{ FixedUnit{ -1 }, FixedUnit{  1 }, FixedUnit{  1 } },
-        Vector3{ FixedUnit{ -1 }, FixedUnit{  1 }, FixedUnit{ -1 } },
+        // 'front' quad (negative Z)
+        Vector3{ FixedUnit{ -0.5 }, FixedUnit{ -0.5 }, FixedUnit{ -0.5 } }, // 0
+        Vector3{ FixedUnit{  0.5 }, FixedUnit{ -0.5 }, FixedUnit{ -0.5 } }, // 1
+        Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{ -0.5 } }, // 2
+        Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{ -0.5 } }, // 3
+        // 'back' quad (positive Z)
+        Vector3{ FixedUnit{ -0.5 }, FixedUnit{ -0.5 }, FixedUnit{  0.5 } }, // 4
+        Vector3{ FixedUnit{  0.5 }, FixedUnit{ -0.5 }, FixedUnit{  0.5 } }, // 5
+        Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{  0.5 } }, // 6
+        Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{  0.5 } }, // 7
     };
+
     std::vector<MeshFace> faces{
-        // TOP
-        MeshFace{ { 0, 1, 3 } },
+        // FRONT
+        MeshFace{ { 1, 0, 2 } },
         MeshFace{ { 1, 2, 3 } },
         // BACK
-        MeshFace{ { 5, 1, 2 } },
-        MeshFace{ { 5, 6, 2 } },
+        MeshFace{ { 7, 6, 4 } },
+        MeshFace{ { 7, 4, 5 } },
         // BOTTOM
-        MeshFace{ { 4, 5, 6 } },
-        MeshFace{ { 4, 6, 7 } },
-        // FRONT
-        MeshFace{ { 7, 4, 0 } },
-        MeshFace{ { 7, 0, 3 } },
-        // LEFT
         MeshFace{ { 3, 2, 6 } },
-        MeshFace{ { 6, 7, 3 } },
+        MeshFace{ { 3, 6, 7 } },
+        // TOP
+        MeshFace{ { 5, 4, 0 } },
+        MeshFace{ { 5, 0, 1 } },
+        // LEFT
+        MeshFace{ { 0, 4, 6 } },
+        MeshFace{ { 0, 6, 2 } },
         // RIGHT
-        MeshFace{ { 1, 0, 4 } },
-        MeshFace{ { 1, 4, 5 } },
+        MeshFace{ { 5, 1, 3 } },
+        MeshFace{ { 5, 3, 7 } },
     };
     return std::make_shared<Mesh>(
         vertices,

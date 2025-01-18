@@ -87,13 +87,13 @@ void RenderTarget::DrawLine(Vector2 a, Vector2 b, uint32_t color)
     }
 }
 
+// Based off of the great article here on reasonably fast + accurate triangle rasterization:
+// https://kristoffer-dyrkorn.github.io/triangle-rasterizer/
 void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
 {
     // Confirm vertices are provided in counter-clockwise order
     if (TriangleDeterminant(a, b, c) <= FixedUnit{ 0 })
     {
-        // SPDLOG_WARN("Invalid winding order of triangle vertices ({},{}), ({},{}), ({},{})",
-        //     a.x, a.y, b.x, b.y, c.x, c.y);
         return;
     }
 
@@ -107,7 +107,6 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
     {
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            // SPDLOG_DEBUG("Testing point {}, {}", x, y);
             Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
 
             Vector3 edges{
@@ -115,25 +114,18 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
                 TriangleDeterminant(c, a, point),
                 TriangleDeterminant(a, b, point)
             };
-            // SPDLOG_DEBUG("\tBC determinant: {}", static_cast<float>(edges.x));
-            // SPDLOG_DEBUG("\tCA determinant: {}", static_cast<float>(edges.y));
-            // SPDLOG_DEBUG("\tAB determinant: {}", static_cast<float>(edges.z));
 
             // Apply top-left edge rule
             if (IsTriangleEdgeLeftOrTop(b, c))
             {
-                //SPDLOG_DEBUG("\tBC is top/left edge.");
-                // SPDLOG_DEBUG("epsilon value {}", static_cast<float>(std::numeric_limits<FixedUnit>::epsilon()));
                 edges.x -= std::numeric_limits<FixedUnit>::epsilon();
             }
             if (IsTriangleEdgeLeftOrTop(c, a))
             {
-                //SPDLOG_DEBUG("\tCA is top/left edge.");
                 edges.y -= std::numeric_limits<FixedUnit>::epsilon();
             }
             if (IsTriangleEdgeLeftOrTop(a, b))
             {
-                //SPDLOG_DEBUG("\tAB is top/left edge.");
                 edges.z -= std::numeric_limits<FixedUnit>::epsilon();
             }
             
@@ -141,10 +133,6 @@ void RenderTarget::DrawTriangle(Vector2 a, Vector2 b, Vector2 c, uint32_t color)
                 (edges.z >= FixedUnit{ 0 }))
             {
                 DrawPixel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), color);
-            }
-            else
-            {
-                //SPDLOG_DEBUG("\tSkipping pixel");
             }
         }
     }

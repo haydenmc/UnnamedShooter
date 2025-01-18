@@ -157,6 +157,15 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
 
     // Shaded
 #if TRUE
+    std::array<uint32_t, 6> faceColors{
+        0xFFFF0000,
+        0xFF00FF00,
+        0xFF0000FF,
+        0xFFFFFF00,
+        0xFFFF00FF,
+        0xFF00FFFF,
+    };
+    size_t faceNum = 0;
     for (const auto& face : mesh->Faces)
     {
         const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
@@ -182,7 +191,9 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
         //     static_cast<float>(screenSpaceCoordinates.at(0).x),static_cast<float>(screenSpaceCoordinates.at(0).y),
         //     static_cast<float>(screenSpaceCoordinates.at(1).x),static_cast<float>(screenSpaceCoordinates.at(1).y),
         //     static_cast<float>(screenSpaceCoordinates.at(2).x),static_cast<float>(screenSpaceCoordinates.at(2).y));
-        m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FFFF);
+        const uint32_t& color{ faceColors.at(faceNum % faceColors.size()) };
+        m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), color);
+        ++faceNum;
     }
 #endif
 }

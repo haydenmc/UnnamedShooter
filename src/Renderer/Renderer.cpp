@@ -33,6 +33,16 @@ namespace
         return Matrix4x4::PerspectiveProjection(FixedUnit{ fovYRads }, FixedUnit{ height / width },
             FixedUnit{ nearPlane }, FixedUnit{ farPlane });
     }
+
+    Vector3 GetTriangleNormal(const std::array<Vector4, 3>& vertices)
+    {
+        Vector3 a{ vertices.at(0).x, vertices.at(0).y, vertices.at(0).z };
+        Vector3 b{ vertices.at(1).x, vertices.at(1).y, vertices.at(1).z };
+        Vector3 c{ vertices.at(2).x, vertices.at(2).y, vertices.at(2).z };
+        Vector3 ab = (b - a).Normalize();
+        Vector3 ac = (c - a).Normalize();
+        return ab.Cross(ac).Normalize();
+    }
 }
 
 Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoConfiguration& resolution) :
@@ -46,36 +56,7 @@ Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoConfiguration&
 void Renderer::Render(SimulationState const& simulationState)
 {
     m_frameBuffer.ClearBuffer();
-    // Draw
-    // DrawTriangle({ 64, 32 }, { 32, 64 }, { 96, 64 }, 0xFF0000FF);
-    // DrawTriangle({ 128, 32 }, { 64, 32 }, { 96, 64 }, 0xFF00FFFF);
-    // m_frameBuffer.DrawTriangle(
-    //     Vector2{ FixedUnit{ 4 }, FixedUnit { 1 } }, //A
-    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 1 } }, //B
-    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 4 } }, //C
-    //     0xFFFF0000);
-
-    // m_frameBuffer.DrawTriangle(
-    //     Vector2{ FixedUnit{ 5 }, FixedUnit { 5 } }, //D
-    //     Vector2{ FixedUnit{ 4 }, FixedUnit { 1 } }, //A
-    //     Vector2{ FixedUnit{ 1 }, FixedUnit { 4 } }, //C
-    //     0xFF00FF00);
-
-
-    // m_frameBuffer.DrawTriangle(
-    //     Vector2{ FixedUnit{ 140 }, FixedUnit { 100 } }, //A
-    //     Vector2{ FixedUnit{ 140 }, FixedUnit { 40 } }, //B
-    //     Vector2{ FixedUnit{ 80 }, FixedUnit { 40 } }, //C
-    //     0xFF00FF00);
-
-    // // m_frameBuffer.DrawTriangle(
-    // //     Vector2{ FixedUnit{ 140 }, FixedUnit { 100 } }, //A
-    // //     Vector2{ FixedUnit{ 80 }, FixedUnit { 40 } }, //C
-    // //     Vector2{ FixedUnit{ 50 }, FixedUnit { 90 } }, //C
-    // //     0xFF0000FF);
-
     DrawScene(&simulationState.Camera, &simulationState.RootWorldEntity);
-    
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr,
         m_frameBuffer.Buffer.data(), (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));
@@ -157,26 +138,41 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
 
     // Shaded
 #if TRUE
-    std::array<uint32_t, 6> faceColors{
-        0xFFFF0000,
-        0xFF00FF00,
-        0xFF0000FF,
-        0xFFFFFF00,
-        0xFFFF00FF,
-        0xFF00FFFF,
-    };
     size_t faceNum = 0;
     for (const auto& face : mesh->Faces)
     {
+        // Prepare vertices to be transformed via matrix multiplication
         const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
         const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
         const auto& pointC{ mesh->Vertices.at(face.MeshVertexIndices.at(2)) };
-
         std::array<Vector4, 3> transformedVertices{
-            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointA.x, pointA.y, pointA.z, FixedUnit{ 1 } },
-            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointB.x, pointB.y, pointB.z, FixedUnit{ 1 } },
-            m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * Vector4{ pointC.x, pointC.y, pointC.z, FixedUnit{ 1 } },
+            Vector4{ pointA.x, pointA.y, pointA.z, FixedUnit{ 1 } },
+            Vector4{ pointB.x, pointB.y, pointB.z, FixedUnit{ 1 } },
+            Vector4{ pointC.x, pointC.y, pointC.z, FixedUnit{ 1 } },
         };
+
+        // Transform from local space -> world space -> view space
+        for (auto& vertex : transformedVertices)
+        {
+            vertex = viewMatrix * entityTranslate * entityRotate * vertex;
+        }
+
+        // Determine if this face is not visible and should be culled
+        auto faceNormal{ GetTriangleNormal(transformedVertices) };
+        auto cameraRay{ Vector3{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 0 } } -
+            Vector3{ transformedVertices.at(0).x, transformedVertices.at(0).y,
+                transformedVertices.at(0).z } };
+        if (faceNormal.Dot(cameraRay) <= FixedUnit{ 0 })
+        {
+            continue;
+        }
+
+        // Transform to screen space
+        for (auto& vertex : transformedVertices)
+        {
+            vertex = m_projectionMatrix * vertex;
+        }
+
         FixedUnit halfWidth{ m_resolution.Width / 2.0f };
         FixedUnit halfHeight{ m_resolution.Height / 2.0f };
         std::array<Vector2, 3> screenSpaceCoordinates{
@@ -187,12 +183,7 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
             Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * halfWidth + halfWidth,
                 (transformedVertices.at(2).y / transformedVertices.at(2).w) * halfHeight + halfHeight },
         };
-        // SPDLOG_DEBUG("Triangle @ ({},{}), ({},{}), ({},{})",
-        //     static_cast<float>(screenSpaceCoordinates.at(0).x),static_cast<float>(screenSpaceCoordinates.at(0).y),
-        //     static_cast<float>(screenSpaceCoordinates.at(1).x),static_cast<float>(screenSpaceCoordinates.at(1).y),
-        //     static_cast<float>(screenSpaceCoordinates.at(2).x),static_cast<float>(screenSpaceCoordinates.at(2).y));
-        const uint32_t& color{ faceColors.at(faceNum % faceColors.size()) };
-        m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), color);
+        m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), face.Color);
         ++faceNum;
     }
 #endif

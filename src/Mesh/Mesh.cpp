@@ -4,6 +4,14 @@
 namespace
 {
     constexpr size_t c_verticesPerFace{ 3 };
+    constexpr std::array<uint32_t, 6> c_faceColors{
+        0xFFFF0000,
+        0xFF00FF00,
+        0xFF0000FF,
+        0xFFFFFF00,
+        0xFFFF00FF,
+        0xFF00FFFF,
+    };
 }
 
 std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
@@ -96,7 +104,8 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
                 std::array<size_t, 3>{ vertexIndices.at(0), vertexIndices.at(1),
                     vertexIndices.at(2) },
                 std::array<size_t, 3>{ textureCoordinateIndices.at(0),
-                    textureCoordinateIndices.at(1), textureCoordinateIndices.at(2) });
+                    textureCoordinateIndices.at(1), textureCoordinateIndices.at(2) },
+                c_faceColors.at(faces.size() % c_faceColors.size()));
         }
     }
 

@@ -6,16 +6,18 @@ struct Vector2
     FixedUnit x;
     FixedUnit y;
 
-    Vector2 operator+(Vector2 const& rhs)
+    Vector2 operator+(Vector2 const& rhs) const
     {
         return Vector2{ x + rhs.x, y + rhs.y };
     }
 
-    Vector2 operator-(Vector2 const& rhs)
+    Vector2 operator-(Vector2 const& rhs) const
     {
         return Vector2{ x - rhs.x, y - rhs.y };
     }
 };
+
+struct Vector4;
 
 struct Vector3
 {
@@ -23,12 +25,12 @@ struct Vector3
     FixedUnit y;
     FixedUnit z;
 
-    FixedUnit Length()
+    FixedUnit Length() const
     {
         return fpm::sqrt(fpm::pow(x, 2) + fpm::pow(y, 2) + fpm::pow(z, 2));
     }
 
-    Vector3 Normalize()
+    Vector3 Normalize() const
     {
         auto length{ Length() };
         return Vector3{
@@ -38,7 +40,7 @@ struct Vector3
         };
     }
 
-    Vector3 Cross(Vector3 const& rhs)
+    Vector3 Cross(Vector3 const& rhs) const
     {
         return Vector3{
             .x = y * rhs.z - z * rhs.y,
@@ -47,17 +49,17 @@ struct Vector3
         };
     }
 
-    FixedUnit Dot(Vector3 const& rhs)
+    FixedUnit Dot(Vector3 const& rhs) const
     {
         return (x * rhs.x) + (y * rhs.y) + (z * rhs.z);
     }
 
-    Vector3 operator+(Vector3 const& rhs)
+    Vector3 operator+(Vector3 const& rhs) const
     {
         return Vector3{ x + rhs.x, y + rhs.y, z + rhs.z };
     }
 
-    Vector3 operator-(Vector3 const& rhs)
+    Vector3 operator-(Vector3 const& rhs) const
     {
         return Vector3{ x - rhs.x, y - rhs.y, z - rhs.z };
     }

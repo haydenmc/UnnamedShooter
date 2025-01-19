@@ -4,6 +4,7 @@ struct MeshFace
 {
     std::array<size_t, 3> MeshVertexIndices;
     std::array<size_t, 3> MeshTextureCoordinateIndices;
+    uint32_t Color;
 };
 
 struct Mesh

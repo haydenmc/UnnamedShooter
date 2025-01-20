@@ -6,7 +6,7 @@ struct CubeEntity : public Entity
 {
     CubeEntity()
     {
-        m_meshes.push_back(Mesh::FromObjFile("cube.obj"));
+        m_meshes.push_back(Mesh::FromObjFile("f22.obj", "f22.png"));
         //m_meshes.push_back(Mesh::Cube());
         //m_meshes.push_back(Mesh::AdjoiningTriangles());
         m_position.z = FixedUnit{ -5 };

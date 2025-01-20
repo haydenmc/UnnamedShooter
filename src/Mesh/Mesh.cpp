@@ -14,18 +14,19 @@ namespace
     };
 }
 
-std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
+std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path objFilePath,
+    std::optional<std::filesystem::path> textureFilePath)
 {
-    SPDLOG_INFO("Loading mesh from OBJ file '{}'...", filePath.string());
-    if (!std::filesystem::exists(filePath))
+    SPDLOG_INFO("Loading mesh from OBJ file '{}'...", objFilePath.string());
+    if (!std::filesystem::exists(objFilePath))
     {
-        SPDLOG_ERROR("OBJ file '{}' does not exist", filePath.string());
+        SPDLOG_ERROR("OBJ file '{}' does not exist", objFilePath.string());
         return nullptr;
     }
-    std::ifstream objFile{ filePath, std::ios::in };
+    std::ifstream objFile{ objFilePath, std::ios::in };
     if (!objFile.is_open())
     {
-        SPDLOG_ERROR("Could not open OBJ file '{}' for reading", filePath.string());
+        SPDLOG_ERROR("Could not open OBJ file '{}' for reading", objFilePath.string());
         return nullptr;
     }
 
@@ -85,13 +86,13 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
             if (vertexIndices.size() != c_verticesPerFace)
             {
                 SPDLOG_ERROR("OBJ file '{}' face specified {} vertices, expected {}",
-                    filePath.string(), vertexIndices.size(), c_verticesPerFace);
+                    objFilePath.string(), vertexIndices.size(), c_verticesPerFace);
                 return nullptr;
             }
             if (vertexIndices.size() != textureCoordinateIndices.size())
             {
                 SPDLOG_ERROR("OBJ file '{}' texture coordinate count does not match vertex count.",
-                    filePath.string());
+                    objFilePath.string());
                 return nullptr;
             }
             // Convert to 0-based indexing
@@ -108,10 +109,16 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path filePath)
                 c_faceColors.at(faces.size() % c_faceColors.size()));
         }
     }
+    std::shared_ptr<PngTexture> texture{ nullptr };
+    if (textureFilePath)
+    {
+        SPDLOG_INFO("Loading PNG texture file '{}'...", textureFilePath.value().string());
+        texture = PngTexture::FromPngFile(textureFilePath.value());
+    }
 
     SPDLOG_INFO("Loaded OBJ file '{}' with {} vertices, {} texture coordinates, {} faces",
-        filePath.string(), vertices.size(), textureCoordinates.size(), faces.size());
-    return std::make_shared<Mesh>(vertices, textureCoordinates, faces);
+        objFilePath.string(), vertices.size(), textureCoordinates.size(), faces.size());
+    return std::make_shared<Mesh>(vertices, textureCoordinates, faces, texture);
 }
 
 std::shared_ptr<Mesh> Mesh::Cube()

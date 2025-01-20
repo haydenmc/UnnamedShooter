@@ -136,15 +136,19 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
     }
 #endif
 
-    // Shaded
+    // Textured
 #if TRUE
-    size_t faceNum = 0;
     for (const auto& face : mesh->Faces)
     {
         // Prepare vertices to be transformed via matrix multiplication
         const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
         const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
         const auto& pointC{ mesh->Vertices.at(face.MeshVertexIndices.at(2)) };
+        std::array<Vector2, 3> textureCoordinates{
+            mesh->TextureCoordinates.at(face.MeshTextureCoordinateIndices.at(0)),
+            mesh->TextureCoordinates.at(face.MeshTextureCoordinateIndices.at(1)),
+            mesh->TextureCoordinates.at(face.MeshTextureCoordinateIndices.at(2)),
+        };
         std::array<Vector4, 3> transformedVertices{
             Vector4{ pointA.x, pointA.y, pointA.z, FixedUnit{ 1 } },
             Vector4{ pointB.x, pointB.y, pointB.z, FixedUnit{ 1 } },
@@ -167,24 +171,24 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
             continue;
         }
 
-        // Transform to screen space
+        // Transform to view space
         for (auto& vertex : transformedVertices)
         {
             vertex = m_projectionMatrix * vertex;
         }
 
+        // Translate to screen space
         FixedUnit halfWidth{ m_resolution.Width / 2.0f };
         FixedUnit halfHeight{ m_resolution.Height / 2.0f };
-        std::array<Vector2, 3> screenSpaceCoordinates{
-            Vector2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * halfWidth + halfWidth,
-                (transformedVertices.at(0).y / transformedVertices.at(0).w) * halfHeight + halfHeight },
-            Vector2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * halfWidth + halfWidth,
-                (transformedVertices.at(1).y / transformedVertices.at(1).w) * halfHeight + halfHeight },
-            Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * halfWidth + halfWidth,
-                (transformedVertices.at(2).y / transformedVertices.at(2).w) * halfHeight + halfHeight },
-        };
-        m_frameBuffer.DrawTriangle(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), face.Color);
-        ++faceNum;
+        for (auto& vertex : transformedVertices)
+        {
+            vertex.x = (vertex.x / vertex.w) * halfWidth + halfWidth;
+            vertex.y = (vertex.y / vertex.w) * halfHeight + halfHeight;
+        }
+
+        m_frameBuffer.DrawTexturedTriangle(transformedVertices.at(0), transformedVertices.at(1),
+            transformedVertices.at(2), textureCoordinates.at(0), textureCoordinates.at(1),
+            textureCoordinates.at(2), mesh->Texture);
     }
 #endif
 }

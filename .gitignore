@@ -3,3 +3,4 @@ builddir/
 subprojects/*
 !subprojects/packagefiles/
 !subprojects/*.wrap
+dist/

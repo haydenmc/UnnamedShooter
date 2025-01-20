@@ -6,6 +6,11 @@ struct Vector2
     FixedUnit x;
     FixedUnit y;
 
+    FixedUnit Cross(Vector2 const& rhs) const
+    {
+        return x * rhs.y - y * rhs.x;
+    }
+
     Vector2 operator+(Vector2 const& rhs) const
     {
         return Vector2{ x + rhs.x, y + rhs.y };
@@ -16,8 +21,6 @@ struct Vector2
         return Vector2{ x - rhs.x, y - rhs.y };
     }
 };
-
-struct Vector4;
 
 struct Vector3
 {
@@ -71,6 +74,14 @@ struct Vector4
     FixedUnit y;
     FixedUnit z;
     FixedUnit w;
+
+    explicit operator Vector2() const
+    {
+        return Vector2{
+            .x = x,
+            .y = y,
+        };
+    }
 };
 
 struct Matrix4x4

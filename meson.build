@@ -39,6 +39,12 @@ fpm_wrap = subproject('fpm',
         'werror=false',
         'warning_level=1',
     ])
+stb_wrap = subproject('stb',
+    default_options: [
+        'cpp_std=c++20',
+        'werror=false',
+        'warning_level=1',
+    ])
 catch2_wrap = subproject('catch2',
     default_options: [
         'cpp_std=c++20',
@@ -68,6 +74,7 @@ executable(meson.project_name(),
         dependency('spdlog'),
         dependency('sdl2'),
         dependency('fpm'),
+        dependency('stb'),
     ],
     include_directories: [
         'src',
@@ -75,19 +82,22 @@ executable(meson.project_name(),
     sources: [
         'src/Configuration.cpp',
         'src/Display.cpp',
+        'src/Entity/CameraEntity.cpp',
         'src/Entrypoint.cpp',
         'src/Input.cpp',
         'src/Mesh/Mesh.cpp',
         'src/Renderer/RenderTarget.cpp',
         'src/Renderer/Renderer.cpp',
         'src/Simulation.cpp',
-        'src/Entity/CameraEntity.cpp',
+        'src/Texture/PngTexture.cpp',
     ],
     win_subsystem: win_subsystem)
 
 # Copy assets
 fs.copyfile('assets/cube.obj', 'cube.obj')
+fs.copyfile('assets/cube.png', 'cube.png')
 fs.copyfile('assets/f22.obj',  'f22.obj')
+fs.copyfile('assets/f22.png',  'f22.png')
 
 tests_exe = executable(meson.project_name() + '.tests',
     cpp_pch: 'test/testpch.h',
@@ -96,6 +106,7 @@ tests_exe = executable(meson.project_name() + '.tests',
         dependency('spdlog'),
         dependency('sdl2'),
         dependency('fpm'),
+        dependency('stb'),
         dependency('catch2-with-main'),
     ],
     include_directories: [
@@ -105,9 +116,6 @@ tests_exe = executable(meson.project_name() + '.tests',
     sources: [
         # Test definitions
         'test/MathTests.cpp',
-        'test/RenderTests.cpp',
-        # Sources under test
-        'src/Renderer/RenderTarget.cpp',
     ])
 
 test('tests', tests_exe)

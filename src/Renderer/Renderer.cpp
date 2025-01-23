@@ -55,7 +55,7 @@ Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoConfiguration&
 
 void Renderer::Render(SimulationState const& simulationState)
 {
-    m_frameBuffer.ClearBuffer();
+    m_frameBuffer.ClearBuffers();
     DrawScene(&simulationState.Camera, &simulationState.RootWorldEntity);
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr,
         m_frameBuffer.Buffer.data(), (m_resolution.Width * sizeof(uint32_t))));

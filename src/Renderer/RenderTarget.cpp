@@ -48,12 +48,13 @@ uint32_t const &RenderTarget::PixelAt(uint16_t x, uint16_t y)
     return Buffer.at((Width * y) + x);
 }
 
-void RenderTarget::ClearBuffer()
+void RenderTarget::ClearBuffers()
 {
-    ClearBuffer(c_defaultBackgroundColor);
+    ClearPixelBuffer(c_defaultBackgroundColor);
+    ClearZBuffer();
 }
 
-void RenderTarget::ClearBuffer(uint32_t color)
+void RenderTarget::ClearPixelBuffer(uint32_t color)
 {
     std::fill(Buffer.begin(), Buffer.end(), color);
 }
@@ -77,13 +78,21 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
     texB.y = 1 - texB.y;
     texC.y = 1 - texC.y;
 
+    FixedUnit interpolatedReciprocalW{ (FixedUnit{ 1 } / vertA.w) * alpha +
+        (FixedUnit{ 1 } / vertB.w) * beta +
+        (FixedUnit{ 1 } / vertC.w) * gamma };
+    // Adjust 1/w so closer pixels have smaller values.
+    FixedUnit depthValue{ FixedUnit{ 1.0f } - interpolatedReciprocalW };
+    // Only draw pixel if it's "closer to screen" than previous pixel
+    if (depthValue >= ZBuffer.at((Width * y) + x))
+    {
+        return;
+    }
+
     FixedUnit interpolatedU{ (texA.x / vertA.w) * alpha +
         (texB.x / vertB.w) * beta + (texC.x / vertC.w) * gamma };
     FixedUnit interpolatedV{ (texA.y / vertA.w) * alpha +
         (texB.y / vertB.w) * beta + (texC.y / vertC.w) * gamma };
-    FixedUnit interpolatedReciprocalW{ (FixedUnit{ 1 } / vertA.w) * alpha +
-        (FixedUnit{ 1 } / vertB.w) * beta +
-        (FixedUnit{ 1 } / vertC.w) * gamma };
     interpolatedU /= interpolatedReciprocalW;
     interpolatedV /= interpolatedReciprocalW;
 
@@ -102,6 +111,7 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
         uint16_t{ 0 }, static_cast<uint16_t>(texture->Height() - 1)) };
     uint32_t const& color{ texture->ColorAt(textureX, textureY) };
 
+    ZBuffer.at((Width * y) + x) = depthValue;
     DrawPixel(x, y, color);
 }
 
@@ -202,8 +212,8 @@ void RenderTarget::DrawTexturedTriangle(Vector4 vertA, Vector4 vertB, Vector4 ve
             if ((horizontalW.x >= FixedUnit{ 0 }) && (horizontalW.y >= FixedUnit{ 0 }) &&
                 (horizontalW.z >= FixedUnit{ 0 }))
             {
-                DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture, vertA, vertB, vertC, texA, texB, texC);
-                //DrawPixel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), 0xFFFF0000);
+                DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture,
+                    vertA, vertB, vertC, texA, texB, texC);
             } 
             Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
 

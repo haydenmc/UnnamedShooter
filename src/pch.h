@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 #include <span>
 #include <string>
 #include <utility>

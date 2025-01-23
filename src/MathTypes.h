@@ -82,6 +82,15 @@ struct Vector4
             .y = y,
         };
     }
+
+    explicit operator Vector3() const
+    {
+        return Vector3{
+            .x = x,
+            .y = y,
+            .z = z,
+        };
+    }
 };
 
 struct Matrix4x4
@@ -276,3 +285,26 @@ struct Matrix4x4
         return EulerRotationX(angles.x) * EulerRotationY(angles.y) * EulerRotationZ(angles.z);
     }
 };
+
+struct MyPolygon
+{
+    std::vector<Vector3> Vertices;
+    std::vector<Vector2> TextureCoordinates;
+};
+
+struct Plane
+{
+    Vector3 Point;
+    Vector3 Normal;
+};
+
+struct Triangle
+{
+    std::array<Vector3, 3> Vertices;
+    std::array<Vector2, 3> TextureCoordinates;
+};
+
+constexpr FixedUnit Lerp(const FixedUnit& a, const FixedUnit& b, const FixedUnit& t)
+{
+    return a + t * (b - a);
+}

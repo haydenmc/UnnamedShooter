@@ -123,8 +123,16 @@ namespace
 
     MyPolygon ClipPolygonAgainstPlane(const MyPolygon& polygon, const Plane& plane)
     {
+        if (polygon.Vertices.size() == 0)
+        {
+            return polygon;
+        }
+
         const Vector3& planePoint{ plane.Point };
         const Vector3& planeNormal{ plane.Normal };
+
+        SPDLOG_DEBUG("Plane point: {}, {}, {}", static_cast<float>(planePoint.x), static_cast<float>(planePoint.y), static_cast<float>(planePoint.z));
+        SPDLOG_DEBUG("Plane normal: {}, {}, {}", static_cast<float>(planeNormal.x), static_cast<float>(planeNormal.y), static_cast<float>(planeNormal.z));
 
         MyPolygon result;
         size_t currentVertexIndex = 0;
@@ -132,8 +140,9 @@ namespace
         size_t previousVertexIndex = polygon.Vertices.size() - 1;
         size_t previousTextureCoordIndex = polygon.TextureCoordinates.size() - 1;
 
-        FixedUnit previousDot{ (polygon.Vertices.at(previousVertexIndex) - planePoint)
-            .Dot(planeNormal) };
+        FixedUnit previousDot{ (polygon.Vertices.at(previousVertexIndex) - planePoint).Dot(planeNormal) };
+        SPDLOG_DEBUG("previousDot: {}", static_cast<float>(previousDot));
+
         while (currentVertexIndex != polygon.Vertices.size())
         {
             const auto& currentVertex{ polygon.Vertices.at(currentVertexIndex) };
@@ -142,13 +151,18 @@ namespace
             const auto& previousVertex{ polygon.Vertices.at(previousVertexIndex) };
             const auto& previousTextureCoord{
                 polygon.TextureCoordinates.at(previousTextureCoordIndex) };
+
+            SPDLOG_DEBUG("currentVertex: {}, {}, {}", static_cast<float>(currentVertex.x), static_cast<float>(currentVertex.y), static_cast<float>(currentVertex.z));
             FixedUnit currentDot{ (currentVertex - planePoint).Dot(planeNormal) };
+
+            SPDLOG_DEBUG("currentDot: {}", static_cast<float>(currentDot));
 
             // Signs have changed between last dot and current dot, indicating
             // the line between the previous and current vertices has crossed
             // the plane boundary
             if (currentDot * previousDot < FixedUnit{ 0 })
             {
+                SPDLOG_DEBUG("Boundary crossed between last and current");
                 // Split the polygon at the intersection point of the line and
                 // the plane
                 FixedUnit t{ previousDot / (previousDot - currentDot) };
@@ -161,12 +175,14 @@ namespace
                     .x = Lerp(previousTextureCoord.x, currentTextureCoord.x, t),
                     .y = Lerp(previousTextureCoord.y, currentTextureCoord.y, t),
                 };
+                SPDLOG_DEBUG("intersectionPoint: {}, {}, {}", static_cast<float>(intersectionPoint.x), static_cast<float>(intersectionPoint.y), static_cast<float>(intersectionPoint.z));
                 result.Vertices.push_back(intersectionPoint);
                 result.TextureCoordinates.push_back(interpolatedTextureCoord);
             }
 
             if (currentDot > FixedUnit{ 0 })
             {
+                SPDLOG_DEBUG("inside vertex: {}, {}, {}", static_cast<float>(currentVertex.x), static_cast<float>(currentVertex.y), static_cast<float>(currentVertex.z));
                 // Current vertex is inside the plane
                 result.Vertices.push_back(currentVertex);
                 result.TextureCoordinates.push_back(currentTextureCoord);
@@ -304,8 +320,10 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
 
     // Textured
 #if TRUE
+    size_t faceNum{ 0 };
     for (const auto& face : mesh->Faces)
     {
+        SPDLOG_DEBUG("Face {}", faceNum++);
         // Prepare vertices to be transformed via matrix multiplication
         const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
         const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
@@ -349,12 +367,14 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
         };
         for (const auto& planePair: m_frustumPlanes)
         {
+            SPDLOG_DEBUG("Clipping against plane {}", static_cast<int>(planePair.first));
             polygon = ClipPolygonAgainstPlane(polygon, planePair.second);
         }
 
-        if (polygon.Vertices.size() != 3)
+        if (polygon.Vertices.size() < 3)
         {
             SPDLOG_DEBUG("Polygon has {} vertices", polygon.Vertices.size());
+            continue;
         }
 
         auto triangles{ TrianglesFromPolygon(polygon) };

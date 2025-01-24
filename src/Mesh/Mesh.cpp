@@ -171,13 +171,20 @@ std::shared_ptr<Mesh> Mesh::AdjoiningTriangles()
         Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{ 0 } },
         Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{ 0 } },
     };
+    std::vector<Vector2> textureCoordinates{
+        Vector2{ FixedUnit{ 0 }, FixedUnit{ 0 } },
+        Vector2{ FixedUnit{ 1 }, FixedUnit{ 0 } },
+        Vector2{ FixedUnit{ 0 }, FixedUnit{ 1 } },
+        Vector2{ FixedUnit{ 1 }, FixedUnit{ 1 } },
+    };
     std::vector<MeshFace> faces{
-        MeshFace{ { 2, 1, 0 } },
-        MeshFace{ { 2, 3, 1 } },
+        MeshFace{ { 2, 1, 0 }, { 2, 1, 0 } },
+        MeshFace{ { 2, 3, 1 }, { 2, 3, 1 } },
     };
     return std::make_shared<Mesh>(
         vertices,
-        std::vector<Vector2>{},
-        faces
+        textureCoordinates,
+        faces,
+        PngTexture::FromPngFile("cube.png")
     );
 }

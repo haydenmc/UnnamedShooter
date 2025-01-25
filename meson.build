@@ -52,6 +52,12 @@ catch2_wrap = subproject('catch2',
         'werror=false',
         'warning_level=1',
     ])
+eigen_wrap = subproject('eigen',
+    default_options: [
+        'cpp_std=c++20',
+        'werror=false',
+        'warning_level=1',
+    ])
 
 # Subsystem for Windows
 # This determines whether the process starts with a console window ('console')
@@ -75,6 +81,7 @@ executable(meson.project_name(),
         dependency('sdl2'),
         dependency('fpm'),
         dependency('stb'),
+        dependency('eigen3'),
     ],
     include_directories: [
         'src',

@@ -33,6 +33,9 @@
 #include <SDL.h>
 #include "Utility/SDLWrappers.h"
 
+// Eigen
+#include <Eigen/Core>
+
 // FPM
 #include <fpm/fixed.hpp>
 #include <fpm/math.hpp>
@@ -41,5 +44,6 @@
 #include <stb_image.h>
 
 // Custom headers
+#include "MathHelpers.h"
 #include "Types.h"
 #include "MathTypes.h"

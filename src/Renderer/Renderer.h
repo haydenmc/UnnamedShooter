@@ -14,6 +14,8 @@ enum class FrustumPlaneKind
     MAX
 };
 
+namespace game
+{
 struct Renderer
 {
     Renderer(std::shared_ptr<SDL_Window> window, VideoConfiguration const& resolution);
@@ -32,3 +34,4 @@ private:
     void DrawEntityTreeMeshes(Matrix4x4 const& viewMatrix, Entity const* rootEntity);
     void DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity, Mesh const* mesh);
 };
+}

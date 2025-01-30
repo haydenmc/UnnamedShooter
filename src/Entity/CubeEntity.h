@@ -10,7 +10,7 @@ struct CubeEntity : public Entity
         //m_meshes.push_back(Mesh::FromObjFile("f22.obj", "f22.png"));
         //m_meshes.push_back(Mesh::Cube());
         m_meshes.push_back(Mesh::AdjoiningTriangles());
-        m_position.z = FixedUnit{ -5 };
+        m_position.z() = -5.0f;
     }
 
     virtual void Update(std::chrono::microseconds deltaTime, InputState const& input) override
@@ -18,6 +18,6 @@ struct CubeEntity : public Entity
         Entity::Update(deltaTime, input);
         //m_rotation.y += FixedUnit{ 0.000001f * deltaTime.count() };
         //m_rotation.x += FixedUnit{ 0.000001f * deltaTime.count() };
-        m_position.x -= FixedUnit{ 0.000001f * deltaTime.count() };
+        m_position.x() -= (0.000001f * deltaTime.count());
     }
 };

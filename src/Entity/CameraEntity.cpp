@@ -4,5 +4,5 @@
 
 CameraEntity::CameraEntity()
 {
-    m_position = { FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ -10 } };
+    m_position = { 0.0f, 0.0f, -10.0f };
 }

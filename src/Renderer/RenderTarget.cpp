@@ -5,42 +5,48 @@ namespace
 {
     constexpr uint32_t c_defaultBackgroundColor{ 0xFF000000 };
 
-    FixedUnit TriangleDeterminant(Vector2 pointA,
-        Vector2 pointB, Vector2 pointC)
+    fpm::fixed_16_16 TriangleDeterminant(Eigen::Vector2<fpm::fixed_16_16> const& pointA,
+        Eigen::Vector2<fpm::fixed_16_16> const& pointB,
+        Eigen::Vector2<fpm::fixed_16_16> const& pointC)
     {
         const auto ab{ pointB - pointA };
         const auto ac{ pointC - pointA };
 
-        return ((ab.y * ac.x) - (ab.x * ac.y));
+        return ((ab.y() * ac.x()) - (ab.x() * ac.y()));
     }
 
-    bool IsTriangleEdgeLeftOrTop(Vector2 pointA, Vector2 pointB)
+    bool IsTriangleEdgeLeftOrTop(Eigen::Vector2<fpm::fixed_16_16> const& pointA,
+        Eigen::Vector2<fpm::fixed_16_16> const& pointB)
     {
         const auto edge{ pointB - pointA };
-        const bool isLeftEdge{ edge.y > FixedUnit{ 0 } };
-        const bool isTopEdge{ (edge.y == FixedUnit{ 0 }) && (edge.x < FixedUnit{ 0 }) };
+        const bool isLeftEdge{ edge.y() > fpm::fixed_16_16{ 0 } };
+        const bool isTopEdge{ (edge.y() == fpm::fixed_16_16{ 0 }) &&
+            (edge.x() < fpm::fixed_16_16{ 0 }) };
         return (isLeftEdge || isTopEdge);
     }
 
-    Vector3 BarycentricWeights(Vector2 vertA, Vector2 vertB, Vector2 vertC, Vector2 point)
+    Eigen::Vector3f BarycentricWeights(Eigen::Vector2f vertA, Eigen::Vector2f vertB,
+        Eigen::Vector2f vertC, Eigen::Vector2f point)
     {
-        Vector2 ac{ vertC - vertA };
-        Vector2 ab{ vertB - vertA };
-        Vector2 ap{ point - vertA };
-        Vector2 pc{ vertC - point };
-        Vector2 pb{ vertB - point };
+        Eigen::Vector2f ac{ vertC - vertA };
+        Eigen::Vector2f ab{ vertB - vertA };
+        Eigen::Vector2f ap{ point - vertA };
+        Eigen::Vector2f pc{ vertC - point };
+        Eigen::Vector2f pb{ vertB - point };
 
-        FixedUnit parallelogramAreaAbc{ ac.Cross(ab) };
-        FixedUnit alpha{ pc.Cross(pb) / parallelogramAreaAbc };
-        FixedUnit beta{ ac.Cross(ap) / parallelogramAreaAbc };
-        FixedUnit gamma{ FixedUnit{ 1.0f } - alpha - beta };
+        float parallelogramAreaAbc{ game::CrossProduct2D(ac, ab) };
+        float alpha{ game::CrossProduct2D(pc, pb) / parallelogramAreaAbc };
+        float beta{ game::CrossProduct2D(ac, ap) / parallelogramAreaAbc };
+        float gamma{ 1.0f - alpha - beta };
 
-        return Vector3{ alpha, beta, gamma };
+        return Eigen::Vector3f{ alpha, beta, gamma };
     }
 }
 
+namespace game
+{
 RenderTarget::RenderTarget(uint16_t width, uint16_t height): Width{ width }, Height{ height },
-    Buffer((Width * Height), c_defaultBackgroundColor), ZBuffer((Width * Height), FixedUnit{ 1.0f })
+    Buffer((Width * Height), c_defaultBackgroundColor), ZBuffer((Width * Height), 1.0f)
 { }
 
 uint32_t const &RenderTarget::PixelAt(uint16_t x, uint16_t y)
@@ -65,45 +71,46 @@ void RenderTarget::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
 }
 
 void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture> texture,
-    Vector4 vertA, Vector4 vertB, Vector4 vertC, Vector2 texA, Vector2 texB, Vector2 texC)
+        Eigen::Vector4f vertA, Eigen::Vector4f vertB, Eigen::Vector4f vertC,
+        Eigen::Vector2f texA, Eigen::Vector2f texB, Eigen::Vector2f texC)
 {
-    Vector3 barycentricWeights{ BarycentricWeights(static_cast<Vector2>(vertA),
-        static_cast<Vector2>(vertB), static_cast<Vector2>(vertC),
-        Vector2{ FixedUnit{ x }, FixedUnit{ y } }) };
-    FixedUnit& alpha{ barycentricWeights.x };
-    FixedUnit& beta{ barycentricWeights.y };
-    FixedUnit& gamma{ barycentricWeights.z };
+    Eigen::Vector3f barycentricWeights{ BarycentricWeights(vertA.head<2>(), vertB.head<2>(),
+        vertC.head<2>(), Eigen::Vector2f{ x, y }) };
+    float const& alpha{ barycentricWeights.x() };
+    float const& beta{ barycentricWeights.y() };
+    float const& gamma{ barycentricWeights.z() };
 
-    texA.y = 1 - texA.y;
-    texB.y = 1 - texB.y;
-    texC.y = 1 - texC.y;
+    texA.y() = 1 - texA.y();
+    texB.y() = 1 - texB.y();
+    texC.y() = 1 - texC.y();
 
-    FixedUnit interpolatedReciprocalW{ (FixedUnit{ 1 } / vertA.w) * alpha +
-        (FixedUnit{ 1 } / vertB.w) * beta +
-        (FixedUnit{ 1 } / vertC.w) * gamma };
+    float interpolatedReciprocalW{
+        (1.0f / vertA.w()) * alpha +
+        (1.0f / vertB.w()) * beta +
+        (1.0f / vertC.w()) * gamma };
     // Adjust 1/w so closer pixels have smaller values.
-    FixedUnit depthValue{ FixedUnit{ 1.0f } - interpolatedReciprocalW };
+    float depthValue{ 1.0f - interpolatedReciprocalW };
     // Only draw pixel if it's "closer to screen" than previous pixel
     if (depthValue >= ZBuffer.at((Width * y) + x))
     {
         return;
     }
 
-    FixedUnit interpolatedU{ (texA.x / vertA.w) * alpha +
-        (texB.x / vertB.w) * beta + (texC.x / vertC.w) * gamma };
-    FixedUnit interpolatedV{ (texA.y / vertA.w) * alpha +
-        (texB.y / vertB.w) * beta + (texC.y / vertC.w) * gamma };
+    float interpolatedU{ (texA.x() / vertA.w()) * alpha +
+        (texB.x() / vertB.w()) * beta + (texC.x() / vertC.w()) * gamma };
+    float interpolatedV{ (texA.y() / vertA.w()) * alpha +
+        (texB.y() / vertB.w()) * beta + (texC.y() / vertC.w()) * gamma };
     interpolatedU /= interpolatedReciprocalW;
     interpolatedV /= interpolatedReciprocalW;
 
     // Intelligently clamp with wraparound to [0, 1]
     // (apparently some OBJ files use UV values > 1 to 'wrap around')
-    interpolatedU = interpolatedU < FixedUnit{ 0.0f } ? FixedUnit{ 0.0f } :
-        (interpolatedU > FixedUnit{ 1.0f } ?
-            (interpolatedU - fpm::floor(interpolatedU)) : interpolatedU);
-    interpolatedV = interpolatedV < FixedUnit{ 0.0f } ? FixedUnit{ 0.0f } :
-        (interpolatedV > FixedUnit{ 1.0f } ?
-            (interpolatedV - fpm::floor(interpolatedV)) : interpolatedV);
+    interpolatedU = interpolatedU < 0.0f ? 0.0f :
+        (interpolatedU > 1.0f ?
+            (interpolatedU - floorf(interpolatedU)) : interpolatedU);
+    interpolatedV = interpolatedV < 0.0f ? 0.0f :
+        (interpolatedV > 1.0f ?
+            (interpolatedV - floorf(interpolatedV)) : interpolatedV);
 
     uint16_t textureX{ std::clamp(static_cast<uint16_t>(interpolatedU * texture->Width()),
         uint16_t{ 0 }, static_cast<uint16_t>(texture->Width() - 1)) };
@@ -117,7 +124,7 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
 
 void RenderTarget::ClearZBuffer()
 {
-    std::fill(ZBuffer.begin(), ZBuffer.end(), FixedUnit{ 1.0f });
+    std::fill(ZBuffer.begin(), ZBuffer.end(), 1.0f);
 }
 
 void RenderTarget::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint32_t color)
@@ -135,23 +142,23 @@ void RenderTarget::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t
     }
 }
 
-void RenderTarget::DrawLine(Vector2 a, Vector2 b, uint32_t color)
+void RenderTarget::DrawLine(Eigen::Vector2f a, Eigen::Vector2f b, uint32_t color)
 {
-    a.x += FixedUnit{ 0.5f };
-    a.y += FixedUnit{ 0.5f };
-    b.x += FixedUnit{ 0.5f };
-    b.y += FixedUnit{ 0.5f };
+    a.x() += 0.5f;
+    a.y() += 0.5f;
+    b.x() += 0.5f;
+    b.y() += 0.5f;
 
-    FixedUnit deltaX{ b.x - a.x };
-    FixedUnit deltaY{ b.y - a.y };
-    FixedUnit sideLength{ fpm::abs(deltaX) >= fpm::abs(deltaY) ?
-        fpm::abs(deltaX) : fpm::abs(deltaY) };
+    float deltaX{ b.x() - a.x() };
+    float deltaY{ b.y() - a.y() };
+    float sideLength{ abs(deltaX) >= abs(deltaY) ?
+        abs(deltaX) : abs(deltaY) };
 
-    FixedUnit xIncrement{ deltaX / sideLength };
-    FixedUnit yIncrement{ deltaY / sideLength };
+    float xIncrement{ deltaX / sideLength };
+    float yIncrement{ deltaY / sideLength };
 
-    FixedUnit currentX{ a.x };
-    FixedUnit currentY{ a.y };
+    float currentX{ a.x() };
+    float currentY{ a.y() };
     for (size_t i{ 0 }; i <= static_cast<size_t>(sideLength); ++i)
     {
         DrawPixel(static_cast<uint16_t>(currentX), static_cast<uint16_t>(currentY), color);
@@ -160,65 +167,78 @@ void RenderTarget::DrawLine(Vector2 a, Vector2 b, uint32_t color)
     }
 }
 
-void RenderTarget::DrawTexturedTriangle(Vector4 vertA, Vector4 vertB, Vector4 vertC,
-    Vector2 texA, Vector2 texB, Vector2 texC, std::shared_ptr<PngTexture> texture)
+void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f vertA, Eigen::Vector4f vertB,
+    Eigen::Vector4f vertC, Eigen::Vector2f texA, Eigen::Vector2f texB, Eigen::Vector2f texC,
+    std::shared_ptr<PngTexture> texture)
 {
+    // First, convert vertices from floating point to fixed-point numbers to ensure we don't run
+    // into precision issues when calculating ownership of triangle edges.
+    Eigen::Vector2<fpm::fixed_16_16> const vertA2D{ fpm::fixed_16_16{ vertA.x() },
+        fpm::fixed_16_16{ vertA.y() } };
+    Eigen::Vector2<fpm::fixed_16_16> const vertB2D{ fpm::fixed_16_16{ vertB.x() },
+        fpm::fixed_16_16{ vertB.y() } };
+    Eigen::Vector2<fpm::fixed_16_16> const vertC2D{ fpm::fixed_16_16{ vertC.x() },
+        fpm::fixed_16_16{ vertC.y() } };
+
     // Confirm vertices are provided in counter-clockwise order
-    if (TriangleDeterminant(static_cast<Vector2>(vertA), static_cast<Vector2>(vertB),
-        static_cast<Vector2>(vertC)) <= FixedUnit{ 0 })
+    if (TriangleDeterminant(vertA2D, vertB2D, vertC2D) <= fpm::fixed_16_16{ 0 })
     {
         return;
     }
 
     // Simple rasterization - test every pixel of the rectangular boundary
     // surrounding the triangle and fill the points "inside" the triangle edges
-    const auto xMin = static_cast<uint16_t>(fpm::floor(std::min(vertA.x,
-        std::min(vertB.x, vertC.x))));
-    const auto yMin = static_cast<uint16_t>(fpm::floor(std::min(vertA.y,
-        std::min(vertB.y, vertC.y))));
-    const auto xMax = static_cast<uint16_t>(fpm::ceil(std::max(vertA.x,
-        std::max(vertB.x, vertC.x))));
-    const auto yMax = static_cast<uint16_t>(fpm::ceil(std::max(vertA.y,
-        std::max(vertB.y, vertC.y))));
+    const auto xMin{ static_cast<uint16_t>(floor(std::min(vertA2D.x(),
+        std::min(vertB2D.x(), vertC2D.x())))) };
+    const auto yMin{ static_cast<uint16_t>(floor(std::min(vertA2D.y(),
+        std::min(vertB2D.y(), vertC2D.y())))) };
+    const auto xMax{ static_cast<uint16_t>(ceil(std::max(vertA2D.x(),
+        std::max(vertB2D.x(), vertC2D.x())))) };
+    const auto yMax{ static_cast<uint16_t>(ceil(std::max(vertA2D.y(),
+        std::max(vertB2D.y(), vertC2D.y())))) };
 
     // Begin with pre-calculating the edge distances at the top-left point.
     // The rest of the pixel values can be incrementally calculated from here.
-    Vector2 topLeft{ (xMin + FixedUnit{ 0.5 }), (yMin + FixedUnit{ 0.5 }) };
-    Vector3 wLeft{
-        TriangleDeterminant(static_cast<Vector2>(vertB), static_cast<Vector2>(vertC), topLeft),
-        TriangleDeterminant(static_cast<Vector2>(vertC), static_cast<Vector2>(vertA), topLeft),
-        TriangleDeterminant(static_cast<Vector2>(vertA), static_cast<Vector2>(vertB), topLeft) };
-    if (IsTriangleEdgeLeftOrTop(static_cast<Vector2>(vertB), static_cast<Vector2>(vertC)))
+    Eigen::Vector2f topLeft{ (xMin + 0.5f), (yMin + 0.5f) };
+    Eigen::Vector3<fpm::fixed_16_16> wLeft{
+        TriangleDeterminant(vertB2D, vertC2D, topLeft),
+        TriangleDeterminant(vertC2D, vertA2D, topLeft),
+        TriangleDeterminant(vertA2D, vertB2D, topLeft) };
+    if (IsTriangleEdgeLeftOrTop(vertB2D, vertC2D))
     {
-        wLeft.x -= std::numeric_limits<FixedUnit>::epsilon();
+        wLeft.x() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
     }
-    if (IsTriangleEdgeLeftOrTop(static_cast<Vector2>(vertC), static_cast<Vector2>(vertA)))
+    if (IsTriangleEdgeLeftOrTop(vertC2D, vertA2D))
     {
-        wLeft.y -= std::numeric_limits<FixedUnit>::epsilon();
+        wLeft.y() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
     }
-    if (IsTriangleEdgeLeftOrTop(static_cast<Vector2>(vertA), static_cast<Vector2>(vertB)))
+    if (IsTriangleEdgeLeftOrTop(vertA2D, vertB2D))
     {
-        wLeft.z -= std::numeric_limits<FixedUnit>::epsilon();
+        wLeft.z() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
     }
+
     // Calculate determinant difference when moving across X axis and Y axis
-    Vector3 dwdx{ (vertB.y - vertC.y), (vertC.y - vertA.y), (vertA.y - vertB.y) };
-    Vector3 dwdy{ (vertB.x - vertC.x), (vertC.x - vertA.x), (vertA.x - vertB.x) };
+    Eigen::Vector3<fpm::fixed_16_16> dwdx{ (vertB2D.y() - vertC2D.y()),
+        (vertC2D.y() - vertA2D.y()), (vertA2D.y() - vertB2D.y()) };
+    Eigen::Vector3<fpm::fixed_16_16> dwdy{ (vertB2D.x() - vertC2D.x()),
+        (vertC2D.x() - vertA2D.x()), (vertA2D.x() - vertB2D.x()) };
     
     for (auto y{ yMin }; y <= yMax; ++y)
     {
-        Vector3 horizontalW{ wLeft };
+        Eigen::Vector3<fpm::fixed_16_16> horizontalW{ wLeft };
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            if ((horizontalW.x >= FixedUnit{ 0 }) && (horizontalW.y >= FixedUnit{ 0 }) &&
-                (horizontalW.z >= FixedUnit{ 0 }))
+            if ((horizontalW.x() >= fpm::fixed_16_16{ 0 }) &&
+                (horizontalW.y() >= fpm::fixed_16_16{ 0 }) &&
+                (horizontalW.z() >= fpm::fixed_16_16{ 0 }))
             {
                 DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture,
                     vertA, vertB, vertC, texA, texB, texC);
-            } 
-            Vector2 point{ FixedUnit{ x + 0.5f }, FixedUnit{ y + 0.5f } };
+            }
 
             horizontalW = (horizontalW - dwdx);
         }
         wLeft = (wLeft + dwdy);
     }
+}
 }

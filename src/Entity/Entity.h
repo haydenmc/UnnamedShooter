@@ -21,12 +21,12 @@ struct Entity
         return m_meshes;
     }
 
-    Vector3 const& GetPosition() const
+    Eigen::Vector3f const& GetPosition() const
     {
         return m_position;
     }
 
-    Vector3 const& GetRotation() const
+    Eigen::Vector3f const& GetRotation() const
     {
         return m_rotation;
     }
@@ -42,6 +42,6 @@ struct Entity
 protected:
     std::vector<std::unique_ptr<Entity>> m_childEntities;
     std::vector<std::shared_ptr<Mesh>> m_meshes;
-    Vector3 m_position{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 0 } };
-    Vector3 m_rotation{ FixedUnit{ 0 }, FixedUnit{ 0 }, FixedUnit{ 0 } };
+    Eigen::Vector3f m_position{ 0.0f, 0.0f, 0.0f };
+    Eigen::Vector3f m_rotation{ 0.0f, 0.0f, 0.0f };
 };

@@ -19,7 +19,7 @@ struct Triangle
     std::array<Eigen::Vector3f, 3> Vertices;
     std::array<Eigen::Vector2f, 3> TextureCoordinates;
 };
-    
+
 Eigen::Matrix4f PerspectiveProjectionTransformMatrix(float const& fieldOfViewRadians,
     float const& aspectRatio, float const& zNear, float const& zFar)
 {
@@ -48,4 +48,31 @@ Eigen::Matrix4f LookAt(Eigen::Vector3f const& eye, Eigen::Vector3f const& target
         {  0.0f,  0.0f,  0.0f,        0.0f },
     };
 }
-};
+
+Eigen::Matrix4f Translation(Eigen::Vector3f position)
+{
+    Eigen::Matrix4f m{ Eigen::Matrix4f::Identity() };
+    m(0, 3) = position.x();
+    m(1, 3) = position.y();
+    m(2, 3) = position.z();
+    return m;
+}
+
+Eigen::Matrix4f Rotation(Eigen::Vector3f rotation)
+{
+    Eigen::Matrix4f m{ Eigen::AngleAxisf(rotation.x(), Eigen::Vector4f::UnitZ())
+        * Eigen::AngleAxisf(rotation.y(), Eigen::Vector4f::UnitY())
+        * Eigen::AngleAxisf(rotation.z(), Eigen::Vector4f::UnitZ()) };
+    return m;
+}
+
+float CrossProduct2D(Eigen::Vector2f const& a, Eigen::Vector2f const& b)
+{
+    return a.x() * b.y() - a.y() * b.x();
+}
+
+constexpr float Lerp(float const& a, float const& b, float const& t)
+{
+    return a + t * (b - a);
+}
+}

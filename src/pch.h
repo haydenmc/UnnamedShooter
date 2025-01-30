@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <span>
 #include <string>
@@ -35,6 +36,7 @@
 
 // Eigen
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 // FPM
 #include <fpm/fixed.hpp>
@@ -45,5 +47,3 @@
 
 // Custom headers
 #include "MathHelpers.h"
-#include "Types.h"
-#include "MathTypes.h"

@@ -30,8 +30,8 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path objFilePath,
         return nullptr;
     }
 
-    std::vector<Vector3> vertices;
-    std::vector<Vector2> textureCoordinates;
+    std::vector<Eigen::Vector3f> vertices;
+    std::vector<Eigen::Vector2f> textureCoordinates;
     std::vector<MeshFace> faces;
     std::string line;
     while (std::getline(objFile, line))
@@ -43,13 +43,13 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path objFilePath,
         {
             float x, y, z;
             iss >> x >> y >> z;
-            vertices.emplace_back(FixedUnit{ x }, FixedUnit{ y }, FixedUnit{ z });
+            vertices.emplace_back(x, y, z);
         }
         else if (prefix == "vt")
         {
             float u, v;
             iss >> u >> v;
-            textureCoordinates.emplace_back(FixedUnit{ u }, FixedUnit{ v });
+            textureCoordinates.emplace_back(u, v);
         }
         else if (prefix == "vn")
         {
@@ -123,17 +123,17 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path objFilePath,
 
 std::shared_ptr<Mesh> Mesh::Cube()
 {
-    std::vector<Vector3> vertices{
+    std::vector<Eigen::Vector3f> vertices{
         // 'front' quad (negative Z)
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{ -0.5 }, FixedUnit{ -0.5 } }, // 0
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{ -0.5 }, FixedUnit{ -0.5 } }, // 1
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{ -0.5 } }, // 2
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{ -0.5 } }, // 3
+        Eigen::Vector3f{ -0.5f, -0.5f, -0.5f }, // 0
+        Eigen::Vector3f{  0.5f, -0.5f, -0.5f }, // 1
+        Eigen::Vector3f{ -0.5f,  0.5f, -0.5f }, // 2
+        Eigen::Vector3f{  0.5f,  0.5f, -0.5f }, // 3
         // 'back' quad (positive Z)
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{ -0.5 }, FixedUnit{  0.5 } }, // 4
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{ -0.5 }, FixedUnit{  0.5 } }, // 5
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{  0.5 } }, // 6
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{  0.5 } }, // 7
+        Eigen::Vector3f{ -0.5f, -0.5f,  0.5f }, // 4
+        Eigen::Vector3f{  0.5f, -0.5f,  0.5f }, // 5
+        Eigen::Vector3f{ -0.5f,  0.5f,  0.5f }, // 6
+        Eigen::Vector3f{  0.5f,  0.5f,  0.5f }, // 7
     };
 
     std::vector<MeshFace> faces{
@@ -158,24 +158,24 @@ std::shared_ptr<Mesh> Mesh::Cube()
     };
     return std::make_shared<Mesh>(
         vertices,
-        std::vector<Vector2>{},
+        std::vector<Eigen::Vector2f>{},
         faces
     );
 }
 
 std::shared_ptr<Mesh> Mesh::AdjoiningTriangles()
 {
-    std::vector<Vector3> vertices{
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{ -0.5 }, FixedUnit{ 0 } },
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{ -0.5 }, FixedUnit{ 0 } },
-        Vector3{ FixedUnit{ -0.5 }, FixedUnit{  0.5 }, FixedUnit{ 0 } },
-        Vector3{ FixedUnit{  0.5 }, FixedUnit{  0.5 }, FixedUnit{ 0 } },
+    std::vector<Eigen::Vector3f> vertices{
+        Eigen::Vector3f{ -0.5f, -0.5f,  0.0f },
+        Eigen::Vector3f{  0.5f, -0.5f,  0.0f },
+        Eigen::Vector3f{ -0.5f,  0.5f,  0.0f },
+        Eigen::Vector3f{  0.5f,  0.5f,  0.0f },
     };
-    std::vector<Vector2> textureCoordinates{
-        Vector2{ FixedUnit{ 0 }, FixedUnit{ 0 } },
-        Vector2{ FixedUnit{ 1 }, FixedUnit{ 0 } },
-        Vector2{ FixedUnit{ 0 }, FixedUnit{ 1 } },
-        Vector2{ FixedUnit{ 1 }, FixedUnit{ 1 } },
+    std::vector<Eigen::Vector2f> textureCoordinates{
+        Eigen::Vector2f{ 0.0f, 0.0f },
+        Eigen::Vector2f{ 1.0f, 0.0f },
+        Eigen::Vector2f{ 0.0f, 1.0f },
+        Eigen::Vector2f{ 1.0f, 1.0f },
     };
     std::vector<MeshFace> faces{
         MeshFace{ { 2, 1, 0 }, { 2, 1, 0 } },

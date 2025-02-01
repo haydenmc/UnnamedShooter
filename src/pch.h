@@ -28,6 +28,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #endif
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 // SDL
 #define SDL_MAIN_HANDLED
@@ -35,8 +36,10 @@
 #include "Utility/SDLWrappers.h"
 
 // Eigen
+#pragma warning(push, 0) // Disable all warnings
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#pragma warning(pop)     // Restore the previous warning state
 
 // FPM
 #include <fpm/fixed.hpp>

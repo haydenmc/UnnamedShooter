@@ -1,5 +1,34 @@
 #pragma once
 
+namespace Eigen
+{
+template<> struct NumTraits<fpm::fixed_16_16> : NumTraits<double>
+{
+    typedef fpm::fixed_16_16 Real;
+    typedef fpm::fixed_16_16 NonInteger;
+    typedef fpm::fixed_16_16 Literal;
+    typedef fpm::fixed_16_16 Nested;
+
+    enum {
+        IsComplex = 0,
+        IsInteger = 0,
+        IsSigned = 1,
+        RequireInitialization = 1,
+        ReadCost = 1,
+        AddCost = 3,
+        MulCost = 3
+    };
+};
+}
+
+// Eigen formatting for fmt
+template <typename T>
+struct fmt::formatter<
+  T,
+  std::enable_if_t<
+    std::is_base_of_v<Eigen::DenseBase<T>, T>,
+    char>> : ostream_formatter {};
+
 namespace game
 {
 struct Polygon
@@ -21,55 +50,16 @@ struct Triangle
 };
 
 Eigen::Matrix4f PerspectiveProjectionTransformMatrix(float const& fieldOfViewRadians,
-    float const& aspectRatio, float const& zNear, float const& zFar)
-{
-    Eigen::Matrix4f m;
-    m(0, 0) = (aspectRatio * (1.0f / tanf(fieldOfViewRadians / 2.0f)));
-    m(1, 1) = (1.0f / tanf(fieldOfViewRadians / 2.0f));
-    m(2, 2) = (zFar / (zFar - zNear));
-    m(2, 3) = ((-zFar * zNear) / (zFar - zNear));
-    m(3, 2) = 1.0f;
-    return m;
-}
+    float const& aspectRatio, float const& zNear, float const& zFar);
 
 Eigen::Matrix4f LookAt(Eigen::Vector3f const& eye, Eigen::Vector3f const& target,
-    Eigen::Vector3f const& up)
-{
-    Eigen::Vector3f z{ target - eye };
-    z.normalize();
-    Eigen::Vector3f x{ up.cross(z) };
-    x.normalize();
-    Eigen::Vector3f y{ z.cross(x) };
+    Eigen::Vector3f const& up);
 
-    return Eigen::Matrix4f{
-        { x.x(), x.y(), x.z(), -x.dot(eye) },
-        { y.x(), y.y(), y.z(), -y.dot(eye) },
-        { z.x(), z.y(), z.z(), -z.dot(eye) },
-        {  0.0f,  0.0f,  0.0f,        0.0f },
-    };
-}
+Eigen::Matrix4f Translation(Eigen::Vector3f position);
 
-Eigen::Matrix4f Translation(Eigen::Vector3f position)
-{
-    Eigen::Matrix4f m{ Eigen::Matrix4f::Identity() };
-    m(0, 3) = position.x();
-    m(1, 3) = position.y();
-    m(2, 3) = position.z();
-    return m;
-}
+Eigen::Matrix4f Rotation(Eigen::Vector3f rotation);
 
-Eigen::Matrix4f Rotation(Eigen::Vector3f rotation)
-{
-    Eigen::Matrix4f m{ Eigen::AngleAxisf(rotation.x(), Eigen::Vector4f::UnitZ())
-        * Eigen::AngleAxisf(rotation.y(), Eigen::Vector4f::UnitY())
-        * Eigen::AngleAxisf(rotation.z(), Eigen::Vector4f::UnitZ()) };
-    return m;
-}
-
-float CrossProduct2D(Eigen::Vector2f const& a, Eigen::Vector2f const& b)
-{
-    return a.x() * b.y() - a.y() * b.x();
-}
+float CrossProduct2D(Eigen::Vector2f const& a, Eigen::Vector2f const& b);
 
 constexpr float Lerp(float const& a, float const& b, float const& t)
 {

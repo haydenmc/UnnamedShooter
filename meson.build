@@ -73,30 +73,36 @@ else
     add_project_arguments('-DNDEBUG', language: 'cpp')
 endif
 
+game_srcs = [
+    'src/Configuration.cpp',
+    'src/Display.cpp',
+    'src/Entity/CameraEntity.cpp',
+    'src/Input.cpp',
+    'src/MathHelpers.cpp',
+    'src/Mesh/Mesh.cpp',
+    'src/Renderer/RenderTarget.cpp',
+    'src/Renderer/Renderer.cpp',
+    'src/Simulation.cpp',
+    'src/Texture/PngTexture.cpp',
+]
+game_deps = [
+    dependency('fmt'),
+    dependency('spdlog'),
+    dependency('sdl2'),
+    dependency('fpm'),
+    dependency('stb'),
+    dependency('eigen3'),
+]
+
 executable(meson.project_name(),
     cpp_pch: 'src/pch.h',
-    dependencies: [
-        dependency('fmt'),
-        dependency('spdlog'),
-        dependency('sdl2'),
-        dependency('fpm'),
-        dependency('stb'),
-        dependency('eigen3'),
-    ],
+    dependencies: game_deps,
     include_directories: [
         'src',
     ],
     sources: [
-        'src/Configuration.cpp',
-        'src/Display.cpp',
-        'src/Entity/CameraEntity.cpp',
+        game_srcs,
         'src/Entrypoint.cpp',
-        'src/Input.cpp',
-        'src/Mesh/Mesh.cpp',
-        'src/Renderer/RenderTarget.cpp',
-        'src/Renderer/Renderer.cpp',
-        'src/Simulation.cpp',
-        'src/Texture/PngTexture.cpp',
     ],
     win_subsystem: win_subsystem)
 
@@ -109,11 +115,7 @@ fs.copyfile('assets/f22.png',  'f22.png')
 tests_exe = executable(meson.project_name() + '.tests',
     cpp_pch: 'test/testpch.h',
     dependencies: [
-        dependency('fmt'),
-        dependency('spdlog'),
-        dependency('sdl2'),
-        dependency('fpm'),
-        dependency('stb'),
+        game_deps,
         dependency('catch2-with-main'),
     ],
     include_directories: [
@@ -121,8 +123,8 @@ tests_exe = executable(meson.project_name() + '.tests',
         'src',
     ],
     sources: [
+        game_srcs,
         # Test definitions
         'test/MathTests.cpp',
     ])
-
 test('tests', tests_exe)

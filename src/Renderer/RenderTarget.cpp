@@ -199,7 +199,8 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f vertA, Eigen::Vector4f v
 
     // Begin with pre-calculating the edge distances at the top-left point.
     // The rest of the pixel values can be incrementally calculated from here.
-    Eigen::Vector2f topLeft{ (xMin + 0.5f), (yMin + 0.5f) };
+    Eigen::Vector2<fpm::fixed_16_16> topLeft{ fpm::fixed_16_16{ static_cast<float>(xMin) + 0.5f },
+        fpm::fixed_16_16{ static_cast<float>(yMin) + 0.5f } };
     Eigen::Vector3<fpm::fixed_16_16> wLeft{
         TriangleDeterminant(vertB2D, vertC2D, topLeft),
         TriangleDeterminant(vertC2D, vertA2D, topLeft),

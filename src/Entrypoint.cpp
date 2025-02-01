@@ -31,7 +31,7 @@ try // Don't catch unhandled exceptions for debug builds
     {
         Simulation simulation{};
         Display display{ resolution };
-        Renderer renderer{ display.GetWindow(), resolution };
+        game::Renderer renderer{ display.GetWindow(), resolution };
         Input input{};
 
         // Run sim loop

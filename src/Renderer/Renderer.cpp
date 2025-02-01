@@ -47,59 +47,27 @@ namespace
 
         result[FrustumPlaneKind::LeftFrustumPlane] = game::Plane{
             .Point = origin,
-            .Normal = Eigen::Vector3f{
-                .x = xCosHalfFov,
-                .y = 0.0f,
-                .z = xSinHalfFov,
-            },
+            .Normal = Eigen::Vector3f{ xCosHalfFov, 0.0f, xSinHalfFov },
         };
         result[FrustumPlaneKind::RightFrustumPlane] = game::Plane{
             .Point = origin,
-            .Normal = Eigen::Vector3f{
-                .x = -xCosHalfFov,
-                .y = 0.0f,
-                .z = xSinHalfFov,
-            },
+            .Normal = Eigen::Vector3f{ -xCosHalfFov, 0.0f, xSinHalfFov },
         };
         result[FrustumPlaneKind::TopFrustumPlane] = game::Plane{
             .Point = origin,
-            .Normal = Eigen::Vector3f{
-                .x = 0.0f,
-                .y = -yCosHalfFov,
-                .z = ySinHalfFov,
-            },
+            .Normal = Eigen::Vector3f{ 0.0f, -yCosHalfFov, ySinHalfFov },
         };
         result[FrustumPlaneKind::BottomFrustumPlane] = game::Plane{
             .Point = origin,
-            .Normal = Eigen::Vector3f{
-                .x = 0.0f,
-                .y = yCosHalfFov,
-                .z = ySinHalfFov,
-            },
+            .Normal = Eigen::Vector3f{ 0.0f, yCosHalfFov, ySinHalfFov },
         };
         result[FrustumPlaneKind::NearFrustumPlane] = game::Plane{
-            .Point = Eigen::Vector3f{
-                .x = 0.0f,
-                .y = 0.0f,
-                .z = zNear,
-            },
-            .Normal = Eigen::Vector3f{
-                .x = 0.0f,
-                .y = 0.0f,
-                .z = 1.0f,
-            },
+            .Point = Eigen::Vector3f{ 0.0f, 0.0f, zNear },
+            .Normal = Eigen::Vector3f{ 0.0f, 0.0f, 1.0f },
         };
         result[FrustumPlaneKind::FarFrustumPlane] = game::Plane{
-            .Point = Eigen::Vector3f{
-                .x = 0.0f,
-                .y = 0.0f,
-                .z = zFar,
-            },
-            .Normal = Eigen::Vector3f{
-                .x =  0.0f,
-                .y =  0.0f,
-                .z = -1.0f },
-            },
+            .Point = Eigen::Vector3f{ 0.0f, 0.0f, zFar },
+            .Normal = Eigen::Vector3f{ 0.0f, 0.0f, -1.0f },
         };
 
         return result;
@@ -110,9 +78,9 @@ namespace
         auto a{ vertices.at(0).head<3>() };
         auto b{ vertices.at(1).head<3>() };
         auto c{ vertices.at(2).head<3>() };
-        auto ab{ b - a };
+        Eigen::Vector3f ab{ b - a };
         ab.normalize();
-        auto ac{ c - a };
+        Eigen::Vector3f ac{ c - a };
         ac.normalize();
         return ab.cross(ac).normalized();
     }
@@ -133,8 +101,8 @@ namespace
         Eigen::Vector3f const& planePoint{ plane.Point };
         Eigen::Vector3f const& planeNormal{ plane.Normal };
 
-        SPDLOG_DEBUG("Plane point: {}, {}, {}", static_cast<float>(planePoint.x), static_cast<float>(planePoint.y), static_cast<float>(planePoint.z));
-        SPDLOG_DEBUG("Plane normal: {}, {}, {}", static_cast<float>(planeNormal.x), static_cast<float>(planeNormal.y), static_cast<float>(planeNormal.z));
+        SPDLOG_DEBUG("Plane point: {}, {}, {}", planePoint.x(), planePoint.y(), planePoint.z());
+        SPDLOG_DEBUG("Plane normal: {}, {}, {}", planeNormal.x(), planeNormal.y(), planeNormal.z());
 
         game::Polygon result;
         size_t currentVertexIndex = 0;
@@ -143,7 +111,7 @@ namespace
         size_t previousTextureCoordIndex = polygon.TextureCoordinates.size() - 1;
 
         float previousDot{ (polygon.Vertices.at(previousVertexIndex) - planePoint).dot(planeNormal) };
-        SPDLOG_DEBUG("previousDot: {}", static_cast<float>(previousDot));
+        SPDLOG_DEBUG("previousDot: {}", previousDot);
 
         while (currentVertexIndex != polygon.Vertices.size())
         {
@@ -154,10 +122,10 @@ namespace
             const auto& previousTextureCoord{
                 polygon.TextureCoordinates.at(previousTextureCoordIndex) };
 
-            SPDLOG_DEBUG("currentVertex: {}, {}, {}", static_cast<float>(currentVertex.x), static_cast<float>(currentVertex.y), static_cast<float>(currentVertex.z));
+            SPDLOG_DEBUG("currentVertex: {}, {}, {}", currentVertex.x(), currentVertex.y(), currentVertex.z());
             float currentDot{ (currentVertex - planePoint).dot(planeNormal) };
 
-            SPDLOG_DEBUG("currentDot: {}", static_cast<float>(currentDot));
+            SPDLOG_DEBUG("currentDot: {}", currentDot);
 
             // Signs have changed between last dot and current dot, indicating
             // the line between the previous and current vertices has crossed
@@ -177,14 +145,14 @@ namespace
                     game::Lerp(previousTextureCoord.x(), currentTextureCoord.x(), t),
                     game::Lerp(previousTextureCoord.y(), currentTextureCoord.y(), t),
                 };
-                SPDLOG_DEBUG("intersectionPoint: {}, {}, {}", static_cast<float>(intersectionPoint.x), static_cast<float>(intersectionPoint.y), static_cast<float>(intersectionPoint.z));
+                SPDLOG_DEBUG("intersectionPoint: {}, {}, {}", intersectionPoint.x(), intersectionPoint.y(), intersectionPoint.z());
                 result.Vertices.push_back(intersectionPoint);
                 result.TextureCoordinates.push_back(interpolatedTextureCoord);
             }
 
             if (currentDot > 0.0f)
             {
-                SPDLOG_DEBUG("inside vertex: {}, {}, {}", static_cast<float>(currentVertex.x), static_cast<float>(currentVertex.y), static_cast<float>(currentVertex.z));
+                SPDLOG_DEBUG("inside vertex: {}, {}, {}", currentVertex.x(), currentVertex.y(), currentVertex.z());
                 // Current vertex is inside the plane
                 result.Vertices.push_back(currentVertex);
                 result.TextureCoordinates.push_back(currentTextureCoord);
@@ -257,7 +225,7 @@ void Renderer::DrawScene(CameraEntity const *cameraEntity, Entity const *sceneEn
     DrawEntityTreeMeshes(viewMatrix, sceneEntity);
 }
 
-void Renderer::DrawEntityTreeMeshes(Matrix4x4 const& viewMatrix, Entity const* rootEntity)
+void Renderer::DrawEntityTreeMeshes(Eigen::Matrix4f const& viewMatrix, Entity const* rootEntity)
 {
     for (const auto& child : rootEntity->GetChildren())
     {
@@ -269,23 +237,33 @@ void Renderer::DrawEntityTreeMeshes(Matrix4x4 const& viewMatrix, Entity const* r
     }
 }
 
-void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity, Mesh const *mesh)
+void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* entity, Mesh const *mesh)
 {
     // First apply entity transformations
     auto entityTranslate{ Translation(entity->GetPosition()) };
     auto entityRotate { Rotation(entity->GetRotation()) };
 
     // Vertex points
-#if FALSE
+#if TRUE
     for (const auto& vertex : mesh->Vertices)
     {
-        Vector4 v{ vertex.x, vertex.y, vertex.z, FixedUnit{ 1 } };
-        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
-        auto screenX{ (transformedVertex.x / transformedVertex.w) * FixedUnit{ m_resolution.Width / 2.0f } +
-            FixedUnit{ m_resolution.Width / 2.0f } + FixedUnit{ 0.5f } };
-        auto screenY{ (transformedVertex.y / transformedVertex.w) * FixedUnit{ m_resolution.Height / 2.0f } +
-            FixedUnit{ m_resolution.Height / 2.0f } + FixedUnit{ 0.5f } };
-        DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
+        Eigen::Vector4f v{ vertex.x(), vertex.y(), vertex.z(), 1.0f };
+        SPDLOG_DEBUG("Mesh vertex:\n{}", v);
+        v = entityRotate * v;
+        SPDLOG_DEBUG("Rotated vertex:\n{}", v);
+        v = entityTranslate * v;
+        SPDLOG_DEBUG("Translated vertex:\n{}", v);
+        v = viewMatrix * v;
+        SPDLOG_DEBUG("View transformed vertex:\n{}", v);
+        v = m_projectionMatrix * v;
+        SPDLOG_DEBUG("Projection transformed vertex:\n{}", v);
+        //auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
+        auto transformedVertex{ v };
+        auto screenX{ (transformedVertex.x() / transformedVertex.w()) * (m_resolution.Width / 2.0f) +
+            (m_resolution.Width / 2.0f) + 0.5f };
+        auto screenY{ (transformedVertex.y() / transformedVertex.w()) * (m_resolution.Height / 2.0f) +
+            (m_resolution.Height / 2.0f) + 0.5f };
+        m_frameBuffer.DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
     }
 #endif
 
@@ -322,10 +300,8 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
 
     // Textured
 #if TRUE
-    size_t faceNum{ 0 };
     for (const auto& face : mesh->Faces)
     {
-        SPDLOG_DEBUG("Face {}", faceNum++);
         // Prepare vertices to be transformed via matrix multiplication
         const auto& pointA{ mesh->Vertices.at(face.MeshVertexIndices.at(0)) };
         const auto& pointB{ mesh->Vertices.at(face.MeshVertexIndices.at(1)) };
@@ -357,29 +333,43 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
             continue;
         }
 
-        // Clip the triangle to the camera frustum boundary
-        MyPolygon polygon{
+        // // Clip the triangle to the camera frustum boundary
+        // Polygon polygon{
+        //     .Vertices = {
+        //         transformedVertices.at(0).head<3>(),
+        //         transformedVertices.at(1).head<3>(),
+        //         transformedVertices.at(2).head<3>(),
+        //     },
+        //     .TextureCoordinates = std::vector<Eigen::Vector2f>(textureCoordinates.begin(),
+        //         textureCoordinates.end()),
+        // };
+        // for (const auto& planePair: m_frustumPlanes)
+        // {
+        //     SPDLOG_DEBUG("Clipping against plane {}", static_cast<int>(planePair.first));
+        //     polygon = ClipPolygonAgainstPlane(polygon, planePair.second);
+        // }
+
+        // if (polygon.Vertices.size() < 3)
+        // {
+        //     SPDLOG_DEBUG("Polygon has {} vertices", polygon.Vertices.size());
+        //     continue;
+        // }
+
+        // auto triangles{ TrianglesFromPolygon(polygon) };
+
+        Triangle t{
             .Vertices = {
-                transformedVertices.at(0).head<3>(),
-                transformedVertices.at(1).head<3>(),
-                transformedVertices.at(2).head<3>(),
+                Eigen::Vector3f{ transformedVertices.at(0).head<3>() },
+                Eigen::Vector3f{ transformedVertices.at(1).head<3>() },
+                Eigen::Vector3f{ transformedVertices.at(2).head<3>() },
             },
-            .TextureCoordinates = std::vector<Vector2>(textureCoordinates.begin(),
-                textureCoordinates.end()),
+            .TextureCoordinates = {
+                textureCoordinates.at(0),
+                textureCoordinates.at(1),
+                textureCoordinates.at(2)
+            }
         };
-        for (const auto& planePair: m_frustumPlanes)
-        {
-            SPDLOG_DEBUG("Clipping against plane {}", static_cast<int>(planePair.first));
-            polygon = ClipPolygonAgainstPlane(polygon, planePair.second);
-        }
-
-        if (polygon.Vertices.size() < 3)
-        {
-            SPDLOG_DEBUG("Polygon has {} vertices", polygon.Vertices.size());
-            continue;
-        }
-
-        auto triangles{ TrianglesFromPolygon(polygon) };
+        std::vector<Triangle> triangles{ t };
 
         for (auto& triangle : triangles)
         {
@@ -397,8 +387,12 @@ void Renderer::DrawEntityMesh(Matrix4x4 const& viewMatrix, Entity const* entity,
             float halfHeight{ m_resolution.Height / 2.0f };
             for (auto& vertex : projectedVertices)
             {
-                vertex.x = (vertex.x / vertex.w) * halfWidth + halfWidth;
-                vertex.y = (vertex.y / vertex.w) * halfHeight + halfHeight;
+                vertex.x() = (vertex.x() / vertex.w()) * halfWidth + halfWidth;
+                vertex.y() = (vertex.y() / vertex.w()) * halfHeight + halfHeight;
+
+                // REMOVEME
+                m_frameBuffer.DrawPixel(static_cast<uint16_t>(vertex.x()), static_cast<uint16_t>(vertex.y()), 0xFFFF0000);
+                // /REMOVEME
             }
 
             m_frameBuffer.DrawTexturedTriangle(projectedVertices.at(0), projectedVertices.at(1),

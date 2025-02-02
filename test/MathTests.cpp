@@ -1,5 +1,6 @@
 #include <testpch.h>
 #include <MathHelpers.h>
+#include <Mesh/Mesh.h>
 
 TEST_CASE("Translation transformation", "[math][matrix][transformation]")
 {
@@ -10,6 +11,33 @@ TEST_CASE("Translation transformation", "[math][matrix][transformation]")
     REQUIRE(result.x() == 2.0f);
     REQUIRE(result.y() == 3.0f);
     REQUIRE(result.z() == 4.0f);
+}
+
+TEST_CASE("Rotation transformation", "[math][matrix][transformation]")
+{
+    Eigen::Vector4f testVertex{ 1.0f, 1.0f, 1.0f, 1.0f };
+    float angleRads{ static_cast<float>(M_PI_2) }; // 90 degrees
+
+    // Rotate 90deg around X axis
+    auto rotationMatrix{ game::Rotation(Eigen::Vector3f{ angleRads, 0.0f, 0.0f }) };
+    Eigen::Vector4f transformedVertex{ rotationMatrix * testVertex };
+    REQUIRE(transformedVertex.x() ==  1.0f);
+    REQUIRE(game::AreEqual(transformedVertex.y(), -1.0f));
+    REQUIRE(transformedVertex.z() ==  1.0f);
+
+    // Rotate 90deg around Y axis
+    rotationMatrix = game::Rotation(Eigen::Vector3f{ 0.0f, angleRads, 0.0f });
+    transformedVertex = (rotationMatrix * testVertex);
+    REQUIRE(transformedVertex.x() ==  1.0f);
+    REQUIRE(transformedVertex.y() ==  1.0f);
+    REQUIRE(game::AreEqual(transformedVertex.z(), -1.0f));
+
+    // Rotate 90deg around Z axis
+    rotationMatrix = game::Rotation(Eigen::Vector3f{ 0.0f, 0.0f, angleRads });
+    transformedVertex = (rotationMatrix * testVertex);
+    REQUIRE(game::AreEqual(transformedVertex.x(), -1.0f));
+    REQUIRE(transformedVertex.y() ==  1.0f);
+    REQUIRE(transformedVertex.z() ==  1.0f);
 }
 
 // TEST_CASE("Polygon clipping", "[math]")

@@ -65,4 +65,9 @@ constexpr float Lerp(float const& a, float const& b, float const& t)
 {
     return a + t * (b - a);
 }
+
+template<typename T>
+constexpr bool AreEqual(T f1, T f2) { 
+  return (std::fabs(f1 - f2) <= std::numeric_limits<T>::epsilon() * std::fmax(std::fabs(f1), std::fabs(f2)));
+}
 }

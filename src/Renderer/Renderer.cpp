@@ -244,21 +244,11 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
     auto entityRotate { Rotation(entity->GetRotation()) };
 
     // Vertex points
-#if TRUE
+#if FALSE
     for (const auto& vertex : mesh->Vertices)
     {
         Eigen::Vector4f v{ vertex.x(), vertex.y(), vertex.z(), 1.0f };
-        SPDLOG_DEBUG("Mesh vertex:\n{}", v);
-        v = entityRotate * v;
-        SPDLOG_DEBUG("Rotated vertex:\n{}", v);
-        v = entityTranslate * v;
-        SPDLOG_DEBUG("Translated vertex:\n{}", v);
-        v = viewMatrix * v;
-        SPDLOG_DEBUG("View transformed vertex:\n{}", v);
-        v = m_projectionMatrix * v;
-        SPDLOG_DEBUG("Projection transformed vertex:\n{}", v);
-        //auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
-        auto transformedVertex{ v };
+        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
         auto screenX{ (transformedVertex.x() / transformedVertex.w()) * (m_resolution.Width / 2.0f) +
             (m_resolution.Width / 2.0f) + 0.5f };
         auto screenY{ (transformedVertex.y() / transformedVertex.w()) * (m_resolution.Height / 2.0f) +
@@ -389,10 +379,6 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
             {
                 vertex.x() = (vertex.x() / vertex.w()) * halfWidth + halfWidth;
                 vertex.y() = (vertex.y() / vertex.w()) * halfHeight + halfHeight;
-
-                // REMOVEME
-                m_frameBuffer.DrawPixel(static_cast<uint16_t>(vertex.x()), static_cast<uint16_t>(vertex.y()), 0xFFFF0000);
-                // /REMOVEME
             }
 
             m_frameBuffer.DrawTexturedTriangle(projectedVertices.at(0), projectedVertices.at(1),

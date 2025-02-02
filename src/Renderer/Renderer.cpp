@@ -101,17 +101,14 @@ namespace
         Eigen::Vector3f const& planePoint{ plane.Point };
         Eigen::Vector3f const& planeNormal{ plane.Normal };
 
-        SPDLOG_DEBUG("Plane point: {}, {}, {}", planePoint.x(), planePoint.y(), planePoint.z());
-        SPDLOG_DEBUG("Plane normal: {}, {}, {}", planeNormal.x(), planeNormal.y(), planeNormal.z());
-
         game::Polygon result;
         size_t currentVertexIndex = 0;
         size_t currentTextureCoordIndex = 0;
         size_t previousVertexIndex = polygon.Vertices.size() - 1;
         size_t previousTextureCoordIndex = polygon.TextureCoordinates.size() - 1;
 
-        float previousDot{ (polygon.Vertices.at(previousVertexIndex) - planePoint).dot(planeNormal) };
-        SPDLOG_DEBUG("previousDot: {}", previousDot);
+        float previousDot{
+            (polygon.Vertices.at(previousVertexIndex) - planePoint).dot(planeNormal) };
 
         while (currentVertexIndex != polygon.Vertices.size())
         {
@@ -121,18 +118,13 @@ namespace
             const auto& previousVertex{ polygon.Vertices.at(previousVertexIndex) };
             const auto& previousTextureCoord{
                 polygon.TextureCoordinates.at(previousTextureCoordIndex) };
-
-            SPDLOG_DEBUG("currentVertex: {}, {}, {}", currentVertex.x(), currentVertex.y(), currentVertex.z());
             float currentDot{ (currentVertex - planePoint).dot(planeNormal) };
-
-            SPDLOG_DEBUG("currentDot: {}", currentDot);
 
             // Signs have changed between last dot and current dot, indicating
             // the line between the previous and current vertices has crossed
             // the plane boundary
             if (currentDot * previousDot < 0.0f)
             {
-                SPDLOG_DEBUG("Boundary crossed between last and current");
                 // Split the polygon at the intersection point of the line and
                 // the plane
                 float t{ previousDot / (previousDot - currentDot) };
@@ -145,14 +137,12 @@ namespace
                     game::Lerp(previousTextureCoord.x(), currentTextureCoord.x(), t),
                     game::Lerp(previousTextureCoord.y(), currentTextureCoord.y(), t),
                 };
-                SPDLOG_DEBUG("intersectionPoint: {}, {}, {}", intersectionPoint.x(), intersectionPoint.y(), intersectionPoint.z());
                 result.Vertices.push_back(intersectionPoint);
                 result.TextureCoordinates.push_back(interpolatedTextureCoord);
             }
 
             if (currentDot > 0.0f)
             {
-                SPDLOG_DEBUG("inside vertex: {}, {}, {}", currentVertex.x(), currentVertex.y(), currentVertex.z());
                 // Current vertex is inside the plane
                 result.Vertices.push_back(currentVertex);
                 result.TextureCoordinates.push_back(currentTextureCoord);
@@ -323,43 +313,27 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
             continue;
         }
 
-        // // Clip the triangle to the camera frustum boundary
-        // Polygon polygon{
-        //     .Vertices = {
-        //         transformedVertices.at(0).head<3>(),
-        //         transformedVertices.at(1).head<3>(),
-        //         transformedVertices.at(2).head<3>(),
-        //     },
-        //     .TextureCoordinates = std::vector<Eigen::Vector2f>(textureCoordinates.begin(),
-        //         textureCoordinates.end()),
-        // };
-        // for (const auto& planePair: m_frustumPlanes)
-        // {
-        //     SPDLOG_DEBUG("Clipping against plane {}", static_cast<int>(planePair.first));
-        //     polygon = ClipPolygonAgainstPlane(polygon, planePair.second);
-        // }
-
-        // if (polygon.Vertices.size() < 3)
-        // {
-        //     SPDLOG_DEBUG("Polygon has {} vertices", polygon.Vertices.size());
-        //     continue;
-        // }
-
-        // auto triangles{ TrianglesFromPolygon(polygon) };
-
-        Triangle t{
+        // Clip the triangle to the camera frustum boundary
+        Polygon polygon{
             .Vertices = {
-                Eigen::Vector3f{ transformedVertices.at(0).head<3>() },
-                Eigen::Vector3f{ transformedVertices.at(1).head<3>() },
-                Eigen::Vector3f{ transformedVertices.at(2).head<3>() },
+                transformedVertices.at(0).head<3>(),
+                transformedVertices.at(1).head<3>(),
+                transformedVertices.at(2).head<3>(),
             },
-            .TextureCoordinates = {
-                textureCoordinates.at(0),
-                textureCoordinates.at(1),
-                textureCoordinates.at(2)
-            }
+            .TextureCoordinates = std::vector<Eigen::Vector2f>(textureCoordinates.begin(),
+                textureCoordinates.end()),
         };
-        std::vector<Triangle> triangles{ t };
+        for (const auto& planePair: m_frustumPlanes)
+        {
+            polygon = ClipPolygonAgainstPlane(polygon, planePair.second);
+        }
+
+        if (polygon.Vertices.size() < 3)
+        {
+            continue;
+        }
+
+        auto triangles{ TrianglesFromPolygon(polygon) };
 
         for (auto& triangle : triangles)
         {

@@ -315,7 +315,7 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
 
         // Determine if this face is not visible and should be culled
         auto faceNormal{ GetTriangleNormal(transformedVertices) };
-        auto cameraRay{ Eigen::Vector3f{ 0.0f, 0.0f, 0.0f } -
+        Eigen::Vector3f cameraRay{ Eigen::Vector3f{ 0.0f, 0.0f, 0.0f } -
             Eigen::Vector3f{ transformedVertices.at(0).x(), transformedVertices.at(0).y(),
                 transformedVertices.at(0).z() } };
         if (faceNormal.dot(cameraRay) <= 0.0f)

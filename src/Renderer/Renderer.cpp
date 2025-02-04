@@ -37,6 +37,8 @@ namespace
     std::unordered_map<FrustumPlaneKind, game::Plane> CreateFrustumPlanes(float fovX, float fovY,
         float zNear, float zFar)
     {
+        SPDLOG_DEBUG("Creating frustum planes. FovX {}deg, FovY {}deg, ZNear {}, ZFar {}",
+            (fovX * (180/M_PI)), (fovY * (180/M_PI)), zNear, zFar);
         std::unordered_map<FrustumPlaneKind, game::Plane> result;
 
         float xCosHalfFov{ cosf(fovX / 2.0f) };
@@ -210,7 +212,10 @@ void Renderer::DrawScene(CameraEntity const *cameraEntity, Entity const *sceneEn
 {
     // Calculate view/camera matrix
     // TODO: Respect camera rotation
-    auto viewMatrix{ game::LookAt(cameraEntity->GetPosition(), Eigen::Vector3f{ 0.0f, 0.0f, 1.0f },
+    Eigen::Vector4f cameraDirection{ Rotation(cameraEntity->GetRotation()) * Eigen::Vector4f{ 0.0f, 0.0f, 1.0f, 1.0f } };
+    Eigen::Vector3f camdir3{ cameraDirection.head<3>() };
+    Eigen::Vector3f cameraTarget{ cameraEntity->GetPosition() + camdir3 };
+    Eigen::Matrix4f viewMatrix{ game::LookAt(cameraEntity->GetPosition(), cameraTarget,
         Eigen::Vector3f{ 0.0f, 1.0f, 0.0f }) };
     DrawEntityTreeMeshes(viewMatrix, sceneEntity);
 }

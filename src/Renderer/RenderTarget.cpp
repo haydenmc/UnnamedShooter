@@ -9,24 +9,32 @@ namespace
         Eigen::Vector2<fpm::fixed_16_16> const& pointB,
         Eigen::Vector2<fpm::fixed_16_16> const& pointC)
     {
-        const auto ab{ pointB - pointA };
-        const auto ac{ pointC - pointA };
+        Eigen::Vector2<fpm::fixed_16_16> const ab{ pointB - pointA };
+        Eigen::Vector2<fpm::fixed_16_16> const ac{ pointC - pointA };
+        fpm::fixed_16_16 det{((ab.y() * ac.x()) - (ab.x() * ac.y()))};
+        SPDLOG_DEBUG("a: {},{} b: {},{} c: {},{}",
+            static_cast<float>(pointA.x()), static_cast<float>(pointA.y()),
+            static_cast<float>(pointB.x()), static_cast<float>(pointB.y()),
+            static_cast<float>(pointC.x()), static_cast<float>(pointC.y()));
+        SPDLOG_DEBUG("ab: {}, {} ac: {}, {}", static_cast<float>(ab.x()),
+            static_cast<float>(ab.y()), static_cast<float>(ac.x()), static_cast<float>(ac.y()));
+        SPDLOG_DEBUG("determinant: {}", static_cast<float>(det));
 
-        return ((ab.y() * ac.x()) - (ab.x() * ac.y()));
+        return det;
     }
 
     bool IsTriangleEdgeLeftOrTop(Eigen::Vector2<fpm::fixed_16_16> const& pointA,
         Eigen::Vector2<fpm::fixed_16_16> const& pointB)
     {
-        const auto edge{ pointB - pointA };
+        Eigen::Vector2<fpm::fixed_16_16> const edge{ pointB - pointA };
         const bool isLeftEdge{ edge.y() > fpm::fixed_16_16{ 0 } };
         const bool isTopEdge{ (edge.y() == fpm::fixed_16_16{ 0 }) &&
             (edge.x() < fpm::fixed_16_16{ 0 }) };
         return (isLeftEdge || isTopEdge);
     }
 
-    Eigen::Vector3f BarycentricWeights(Eigen::Vector2f vertA, Eigen::Vector2f vertB,
-        Eigen::Vector2f vertC, Eigen::Vector2f point)
+    Eigen::Vector3f BarycentricWeights(Eigen::Vector2f const& vertA, Eigen::Vector2f const& vertB,
+        Eigen::Vector2f const& vertC, Eigen::Vector2f const& point)
     {
         Eigen::Vector2f ac{ vertC - vertA };
         Eigen::Vector2f ab{ vertB - vertA };
@@ -71,18 +79,14 @@ void RenderTarget::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
 }
 
 void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture> texture,
-        Eigen::Vector4f vertA, Eigen::Vector4f vertB, Eigen::Vector4f vertC,
-        Eigen::Vector2f texA, Eigen::Vector2f texB, Eigen::Vector2f texC)
+        Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB, Eigen::Vector4f const& vertC,
+        Eigen::Vector2f const& texA, Eigen::Vector2f const& texB, Eigen::Vector2f const& texC)
 {
     Eigen::Vector3f barycentricWeights{ BarycentricWeights(vertA.head<2>(), vertB.head<2>(),
         vertC.head<2>(), Eigen::Vector2f{ x, y }) };
     float const& alpha{ barycentricWeights.x() };
     float const& beta{ barycentricWeights.y() };
     float const& gamma{ barycentricWeights.z() };
-
-    texA.y() = 1 - texA.y();
-    texB.y() = 1 - texB.y();
-    texC.y() = 1 - texC.y();
 
     float interpolatedReciprocalW{
         (1.0f / vertA.w()) * alpha +
@@ -98,8 +102,8 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
 
     float interpolatedU{ (texA.x() / vertA.w()) * alpha +
         (texB.x() / vertB.w()) * beta + (texC.x() / vertC.w()) * gamma };
-    float interpolatedV{ (texA.y() / vertA.w()) * alpha +
-        (texB.y() / vertB.w()) * beta + (texC.y() / vertC.w()) * gamma };
+    float interpolatedV{ ((1 - texA.y()) / vertA.w()) * alpha +
+        ((1 - texB.y()) / vertB.w()) * beta + ((1 - texC.y()) / vertC.w()) * gamma };
     interpolatedU /= interpolatedReciprocalW;
     interpolatedV /= interpolatedReciprocalW;
 
@@ -142,8 +146,10 @@ void RenderTarget::DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t
     }
 }
 
-void RenderTarget::DrawLine(Eigen::Vector2f a, Eigen::Vector2f b, uint32_t color)
+void RenderTarget::DrawLine(Eigen::Vector2f const& inA, Eigen::Vector2f const& inB, uint32_t color)
 {
+    Eigen::Vector2f a{ inA };
+    Eigen::Vector2f b{ inB };
     a.x() += 0.5f;
     a.y() += 0.5f;
     b.x() += 0.5f;
@@ -167,9 +173,9 @@ void RenderTarget::DrawLine(Eigen::Vector2f a, Eigen::Vector2f b, uint32_t color
     }
 }
 
-void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f vertA, Eigen::Vector4f vertB,
-    Eigen::Vector4f vertC, Eigen::Vector2f texA, Eigen::Vector2f texB, Eigen::Vector2f texC,
-    std::shared_ptr<PngTexture> texture)
+void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,
+    Eigen::Vector4f const& vertC, Eigen::Vector2f const& texA, Eigen::Vector2f const& texB,
+    Eigen::Vector2f const& texC, std::shared_ptr<PngTexture> texture)
 {
     // First, convert vertices from floating point to fixed-point numbers to ensure we don't run
     // into precision issues when calculating ownership of triangle edges.

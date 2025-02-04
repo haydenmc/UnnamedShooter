@@ -5,31 +5,31 @@ namespace
 {
     constexpr uint32_t c_defaultBackgroundColor{ 0xFF000000 };
 
-    fpm::fixed_16_16 TriangleDeterminant(Eigen::Vector2<fpm::fixed_16_16> const& pointA,
-        Eigen::Vector2<fpm::fixed_16_16> const& pointB,
-        Eigen::Vector2<fpm::fixed_16_16> const& pointC)
+    fpm::fixed_24_8 TriangleDeterminant(Eigen::Vector2<fpm::fixed_24_8> const& pointA,
+        Eigen::Vector2<fpm::fixed_24_8> const& pointB,
+        Eigen::Vector2<fpm::fixed_24_8> const& pointC)
     {
-        Eigen::Vector2<fpm::fixed_16_16> const ab{ pointB - pointA };
-        Eigen::Vector2<fpm::fixed_16_16> const ac{ pointC - pointA };
-        fpm::fixed_16_16 det{((ab.y() * ac.x()) - (ab.x() * ac.y()))};
-        SPDLOG_DEBUG("a: {},{} b: {},{} c: {},{}",
-            static_cast<float>(pointA.x()), static_cast<float>(pointA.y()),
-            static_cast<float>(pointB.x()), static_cast<float>(pointB.y()),
-            static_cast<float>(pointC.x()), static_cast<float>(pointC.y()));
-        SPDLOG_DEBUG("ab: {}, {} ac: {}, {}", static_cast<float>(ab.x()),
-            static_cast<float>(ab.y()), static_cast<float>(ac.x()), static_cast<float>(ac.y()));
-        SPDLOG_DEBUG("determinant: {}", static_cast<float>(det));
+        Eigen::Vector2<fpm::fixed_24_8> const ab{ pointB - pointA };
+        Eigen::Vector2<fpm::fixed_24_8> const ac{ pointC - pointA };
+        fpm::fixed_24_8 det{((ab.y() * ac.x()) - (ab.x() * ac.y()))};
+        // SPDLOG_DEBUG("a: {},{} b: {},{} c: {},{}",
+        //     static_cast<float>(pointA.x()), static_cast<float>(pointA.y()),
+        //     static_cast<float>(pointB.x()), static_cast<float>(pointB.y()),
+        //     static_cast<float>(pointC.x()), static_cast<float>(pointC.y()));
+        // SPDLOG_DEBUG("ab: {}, {} ac: {}, {}", static_cast<float>(ab.x()),
+        //     static_cast<float>(ab.y()), static_cast<float>(ac.x()), static_cast<float>(ac.y()));
+        // SPDLOG_DEBUG("determinant: {}", static_cast<float>(det));
 
         return det;
     }
 
-    bool IsTriangleEdgeLeftOrTop(Eigen::Vector2<fpm::fixed_16_16> const& pointA,
-        Eigen::Vector2<fpm::fixed_16_16> const& pointB)
+    bool IsTriangleEdgeLeftOrTop(Eigen::Vector2<fpm::fixed_24_8> const& pointA,
+        Eigen::Vector2<fpm::fixed_24_8> const& pointB)
     {
-        Eigen::Vector2<fpm::fixed_16_16> const edge{ pointB - pointA };
-        const bool isLeftEdge{ edge.y() > fpm::fixed_16_16{ 0 } };
-        const bool isTopEdge{ (edge.y() == fpm::fixed_16_16{ 0 }) &&
-            (edge.x() < fpm::fixed_16_16{ 0 }) };
+        Eigen::Vector2<fpm::fixed_24_8> const edge{ pointB - pointA };
+        const bool isLeftEdge{ edge.y() > fpm::fixed_24_8{ 0 } };
+        const bool isTopEdge{ (edge.y() == fpm::fixed_24_8{ 0 }) &&
+            (edge.x() < fpm::fixed_24_8{ 0 }) };
         return (isLeftEdge || isTopEdge);
     }
 
@@ -179,15 +179,15 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vec
 {
     // First, convert vertices from floating point to fixed-point numbers to ensure we don't run
     // into precision issues when calculating ownership of triangle edges.
-    Eigen::Vector2<fpm::fixed_16_16> const vertA2D{ fpm::fixed_16_16{ vertA.x() },
-        fpm::fixed_16_16{ vertA.y() } };
-    Eigen::Vector2<fpm::fixed_16_16> const vertB2D{ fpm::fixed_16_16{ vertB.x() },
-        fpm::fixed_16_16{ vertB.y() } };
-    Eigen::Vector2<fpm::fixed_16_16> const vertC2D{ fpm::fixed_16_16{ vertC.x() },
-        fpm::fixed_16_16{ vertC.y() } };
+    Eigen::Vector2<fpm::fixed_24_8> const vertA2D{ fpm::fixed_24_8{ vertA.x() },
+        fpm::fixed_24_8{ vertA.y() } };
+    Eigen::Vector2<fpm::fixed_24_8> const vertB2D{ fpm::fixed_24_8{ vertB.x() },
+        fpm::fixed_24_8{ vertB.y() } };
+    Eigen::Vector2<fpm::fixed_24_8> const vertC2D{ fpm::fixed_24_8{ vertC.x() },
+        fpm::fixed_24_8{ vertC.y() } };
 
     // Confirm vertices are provided in counter-clockwise order
-    if (TriangleDeterminant(vertA2D, vertB2D, vertC2D) <= fpm::fixed_16_16{ 0 })
+    if (TriangleDeterminant(vertA2D, vertB2D, vertC2D) <= fpm::fixed_24_8{ 0 })
     {
         return;
     }
@@ -205,39 +205,39 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vec
 
     // Begin with pre-calculating the edge distances at the top-left point.
     // The rest of the pixel values can be incrementally calculated from here.
-    Eigen::Vector2<fpm::fixed_16_16> topLeft{ fpm::fixed_16_16{ static_cast<float>(xMin) + 0.5f },
-        fpm::fixed_16_16{ static_cast<float>(yMin) + 0.5f } };
-    Eigen::Vector3<fpm::fixed_16_16> wLeft{
+    Eigen::Vector2<fpm::fixed_24_8> topLeft{ fpm::fixed_24_8{ static_cast<float>(xMin) + 0.5f },
+        fpm::fixed_24_8{ static_cast<float>(yMin) + 0.5f } };
+    Eigen::Vector3<fpm::fixed_24_8> wLeft{
         TriangleDeterminant(vertB2D, vertC2D, topLeft),
         TriangleDeterminant(vertC2D, vertA2D, topLeft),
         TriangleDeterminant(vertA2D, vertB2D, topLeft) };
     if (IsTriangleEdgeLeftOrTop(vertB2D, vertC2D))
     {
-        wLeft.x() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
+        wLeft.x() -= std::numeric_limits<fpm::fixed_24_8>::epsilon();
     }
     if (IsTriangleEdgeLeftOrTop(vertC2D, vertA2D))
     {
-        wLeft.y() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
+        wLeft.y() -= std::numeric_limits<fpm::fixed_24_8>::epsilon();
     }
     if (IsTriangleEdgeLeftOrTop(vertA2D, vertB2D))
     {
-        wLeft.z() -= std::numeric_limits<fpm::fixed_16_16>::epsilon();
+        wLeft.z() -= std::numeric_limits<fpm::fixed_24_8>::epsilon();
     }
 
     // Calculate determinant difference when moving across X axis and Y axis
-    Eigen::Vector3<fpm::fixed_16_16> dwdx{ (vertB2D.y() - vertC2D.y()),
+    Eigen::Vector3<fpm::fixed_24_8> dwdx{ (vertB2D.y() - vertC2D.y()),
         (vertC2D.y() - vertA2D.y()), (vertA2D.y() - vertB2D.y()) };
-    Eigen::Vector3<fpm::fixed_16_16> dwdy{ (vertB2D.x() - vertC2D.x()),
+    Eigen::Vector3<fpm::fixed_24_8> dwdy{ (vertB2D.x() - vertC2D.x()),
         (vertC2D.x() - vertA2D.x()), (vertA2D.x() - vertB2D.x()) };
     
     for (auto y{ yMin }; y <= yMax; ++y)
     {
-        Eigen::Vector3<fpm::fixed_16_16> horizontalW{ wLeft };
+        Eigen::Vector3<fpm::fixed_24_8> horizontalW{ wLeft };
         for (auto x{ xMin }; x <= xMax; ++x)
         {
-            if ((horizontalW.x() >= fpm::fixed_16_16{ 0 }) &&
-                (horizontalW.y() >= fpm::fixed_16_16{ 0 }) &&
-                (horizontalW.z() >= fpm::fixed_16_16{ 0 }))
+            if ((horizontalW.x() >= fpm::fixed_24_8{ 0 }) &&
+                (horizontalW.y() >= fpm::fixed_24_8{ 0 }) &&
+                (horizontalW.z() >= fpm::fixed_24_8{ 0 }))
             {
                 DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture,
                     vertA, vertB, vertC, texA, texB, texC);

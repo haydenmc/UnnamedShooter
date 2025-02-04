@@ -2,12 +2,12 @@
 
 namespace Eigen
 {
-template<> struct NumTraits<fpm::fixed_16_16> : NumTraits<double>
+template<> struct NumTraits<fpm::fixed_24_8> : NumTraits<double>
 {
-    typedef fpm::fixed_16_16 Real;
-    typedef fpm::fixed_16_16 NonInteger;
-    typedef fpm::fixed_16_16 Literal;
-    typedef fpm::fixed_16_16 Nested;
+    typedef fpm::fixed_24_8 Real;
+    typedef fpm::fixed_24_8 NonInteger;
+    typedef fpm::fixed_24_8 Literal;
+    typedef fpm::fixed_24_8 Nested;
 
     enum {
         IsComplex = 0,

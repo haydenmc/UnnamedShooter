@@ -36,5 +36,5 @@ void CameraEntity::Update(std::chrono::microseconds deltaTime, InputState const 
     {
         m_rotation.y() += (c_cameraTurnSpeed * deltaTime.count());
     }
-    SPDLOG_DEBUG("Camera position: {}", m_position);
+    //SPDLOG_DEBUG("Camera position: {}", m_position);
 }

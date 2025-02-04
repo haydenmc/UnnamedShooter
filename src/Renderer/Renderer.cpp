@@ -37,8 +37,6 @@ namespace
     std::unordered_map<FrustumPlaneKind, game::Plane> CreateFrustumPlanes(float fovX, float fovY,
         float zNear, float zFar)
     {
-        SPDLOG_DEBUG("Creating frustum planes. FovX {}deg, FovY {}deg, ZNear {}, ZFar {}",
-            (fovX * (180/M_PI)), (fovY * (180/M_PI)), zNear, zFar);
         std::unordered_map<FrustumPlaneKind, game::Plane> result;
 
         float xCosHalfFov{ cosf(fovX / 2.0f) };

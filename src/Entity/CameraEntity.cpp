@@ -5,8 +5,10 @@
 namespace
 {
     constexpr float c_cameraMovementSpeed{ 0.000001f };
-    constexpr float c_cameraTurnSpeed{ 0.0000005f };
+    constexpr float c_cameraTurnSpeed{ 0.005f };
     Eigen::Vector4f const c_cameraTarget{ 0.0f, 0.0f, 1.0f, 1.0f };
+    constexpr float c_cameraMinPitch{(-static_cast<float>(M_PI_2) + 0.1f)};
+    constexpr float c_cameraMaxPitch{(static_cast<float>(M_PI_2) - 0.1f)};
 }
 
 CameraEntity::CameraEntity()
@@ -28,13 +30,15 @@ void CameraEntity::Update(std::chrono::microseconds deltaTime, InputState const 
         Eigen::Vector4f backwardVelocity{ cameraDirection * (c_cameraMovementSpeed * deltaTime.count()) };
         m_position -= backwardVelocity.head<3>();
     }
-    if (input.MoveLeft)
+    m_rotation.y() += (input.RelativeLookX * c_cameraTurnSpeed);
+    while (m_rotation.y() < static_cast<float>(-2*M_PI))
     {
-        m_rotation.y() -= (c_cameraTurnSpeed * deltaTime.count());
+        m_rotation.y() += static_cast<float>(2*M_PI);
     }
-    if (input.MoveRight)
+    while (m_rotation.y() > static_cast<float>(2*M_PI))
     {
-        m_rotation.y() += (c_cameraTurnSpeed * deltaTime.count());
+        m_rotation.y() -= static_cast<float>(2*M_PI);
     }
-    //SPDLOG_DEBUG("Camera position: {}", m_position);
+    m_rotation.x() -= (input.RelativeLookY * c_cameraTurnSpeed);
+    m_rotation.x() = std::clamp(m_rotation.x(), c_cameraMinPitch, c_cameraMaxPitch);
 }

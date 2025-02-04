@@ -7,6 +7,8 @@ struct InputState
     bool MoveBackward;
     bool MoveLeft;
     bool MoveRight;
+    int RelativeLookX;
+    int RelativeLookY;
 };
 
 struct Input

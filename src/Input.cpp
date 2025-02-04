@@ -12,7 +12,9 @@ namespace
 }
 
 Input::Input() : m_sdlKeyboardState{ GetSDLKeyboardStatePointer() }
-{ }
+{
+    CheckSdlReturn(SDL_SetRelativeMouseMode(SDL_TRUE));
+}
 
 Input::~Input()
 {
@@ -28,5 +30,6 @@ InputState const& Input::GetInputState()
     m_inputState.MoveBackward = m_sdlKeyboardState[SDL_SCANCODE_S];
     m_inputState.MoveLeft = m_sdlKeyboardState[SDL_SCANCODE_A];
     m_inputState.MoveRight = m_sdlKeyboardState[SDL_SCANCODE_D];
+    SDL_GetRelativeMouseState(&m_inputState.RelativeLookX, &m_inputState.RelativeLookY);
     return m_inputState;
 }

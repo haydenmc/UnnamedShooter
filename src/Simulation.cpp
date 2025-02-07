@@ -1,10 +1,14 @@
 #include <pch.h>
 #include "Entity/CubeEntity.h"
+#include "Entity/PlayerEntity.h"
 #include "Simulation.h"
 
 Simulation::Simulation()
 {
     m_simulationState.RootWorldEntity.MakeChild<CubeEntity>();
+    auto playerEntity{ m_simulationState.RootWorldEntity
+        .MakeChild<PlayerEntity>(&m_simulationState.Camera) };
+    playerEntity->SetPosition(Eigen::Vector3f{ 0.0f, 0.0f, -5.0f });
 }
 
 SimulationState const& Simulation::Update(InputState const& inputState)

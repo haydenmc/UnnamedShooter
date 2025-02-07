@@ -6,8 +6,8 @@ struct CubeEntity : public Entity
 {
     CubeEntity()
     {
-        m_meshes.push_back(Mesh::FromObjFile("cube.obj", "cube.png"));
-        //m_meshes.push_back(Mesh::FromObjFile("f22.obj", "f22.png"));
+        //m_meshes.push_back(Mesh::FromObjFile("cube.obj", "cube.png"));
+        m_meshes.push_back(Mesh::FromObjFile("f22.obj", "f22.png"));
         //m_meshes.push_back(Mesh::AdjoiningTriangles());
         //m_position.z() = 5.0f;
         //m_rotation.x() = static_cast<float>(M_PI);

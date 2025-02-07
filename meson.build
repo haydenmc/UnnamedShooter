@@ -77,6 +77,7 @@ game_srcs = [
     'src/Configuration.cpp',
     'src/Display.cpp',
     'src/Entity/CameraEntity.cpp',
+    'src/Entity/PlayerEntity.cpp',
     'src/Input.cpp',
     'src/MathHelpers.cpp',
     'src/Mesh/Mesh.cpp',

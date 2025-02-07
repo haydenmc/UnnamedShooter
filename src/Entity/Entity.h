@@ -6,9 +6,12 @@ struct Mesh;
 struct Entity
 {
     template<class T, typename... Params>
-    void MakeChild(Params&&... args)
+    T* MakeChild(Params&&... args)
     {
-        m_childEntities.push_back(std::move(std::make_unique<T>(args...)));
+        std::unique_ptr<T> instance{ std::make_unique<T>(args...) };
+        T* instancePtr{ instance.get() };
+        m_childEntities.push_back(std::move(instance));
+        return instancePtr;
     }
 
     std::vector<std::unique_ptr<Entity>> const& GetChildren() const
@@ -26,9 +29,19 @@ struct Entity
         return m_position;
     }
 
+    void SetPosition(Eigen::Vector3f const& position)
+    {
+        m_position = position;
+    }
+
     Eigen::Vector3f const& GetRotation() const
     {
         return m_rotation;
+    }
+
+    void SetRotation(Eigen::Vector3f const& rotation)
+    {
+        m_rotation = rotation;
     }
 
     virtual void Update(std::chrono::microseconds deltaTime, InputState const& input)

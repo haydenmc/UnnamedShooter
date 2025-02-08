@@ -3,7 +3,7 @@
 
 namespace
 {
-    constexpr uint32_t c_defaultBackgroundColor{ 0xFF000000 };
+    constexpr uint32_t c_defaultBackgroundColor{ 0xFF88FFFF };
 
     fpm::fixed_24_8 TriangleDeterminant(Eigen::Vector2<fpm::fixed_24_8> const& pointA,
         Eigen::Vector2<fpm::fixed_24_8> const& pointB,
@@ -108,13 +108,17 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
     interpolatedV /= interpolatedReciprocalW;
 
     // Intelligently clamp with wraparound to [0, 1]
-    // (apparently some OBJ files use UV values > 1 to 'wrap around')
-    interpolatedU = interpolatedU < 0.0f ? 0.0f :
-        (interpolatedU > 1.0f ?
-            (interpolatedU - floorf(interpolatedU)) : interpolatedU);
-    interpolatedV = interpolatedV < 0.0f ? 0.0f :
-        (interpolatedV > 1.0f ?
-            (interpolatedV - floorf(interpolatedV)) : interpolatedV);
+    // (apparently some OBJ files use UV values <> 1 to 'wrap around')
+    interpolatedU = std::fmod(interpolatedU, 1.0f);
+    if (interpolatedU < 0.0f)
+    {
+        interpolatedU += 1.0f;
+    }
+    interpolatedV = std::fmod(interpolatedV, 1.0f);
+    if (interpolatedV < 0.0f)
+    {
+        interpolatedV += 1.0f;
+    }
 
     uint16_t textureX{ std::clamp(static_cast<uint16_t>(interpolatedU * texture->Width()),
         uint16_t{ 0 }, static_cast<uint16_t>(texture->Width() - 1)) };

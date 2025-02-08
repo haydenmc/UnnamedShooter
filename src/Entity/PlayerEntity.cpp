@@ -73,6 +73,4 @@ void PlayerEntity::Update(std::chrono::microseconds deltaTime, InputState const 
     Eigen::Vector3f cameraRotation{ m_lookPitchRadians, m_rotation.y(), 0.0f };
     m_camera->SetPosition(m_position);
     m_camera->SetRotation(cameraRotation);
-
-    SPDLOG_DEBUG("Player velocity: {}", m_velocity.norm());
 }

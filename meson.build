@@ -77,6 +77,7 @@ game_srcs = [
     'src/Configuration.cpp',
     'src/Display.cpp',
     'src/Entity/CameraEntity.cpp',
+    'src/Entity/LandscapeEntity.cpp',
     'src/Entity/PlayerEntity.cpp',
     'src/Input.cpp',
     'src/MathHelpers.cpp',
@@ -108,10 +109,12 @@ executable(meson.project_name(),
     win_subsystem: win_subsystem)
 
 # Copy assets
-fs.copyfile('assets/cube.obj', 'cube.obj')
-fs.copyfile('assets/cube.png', 'cube.png')
-fs.copyfile('assets/f22.obj',  'f22.obj')
-fs.copyfile('assets/f22.png',  'f22.png')
+fs.copyfile('assets/cube.obj',              'cube.obj')
+fs.copyfile('assets/cube.png',              'cube.png')
+fs.copyfile('assets/f22.obj',               'f22.obj')
+fs.copyfile('assets/f22.png',               'f22.png')
+fs.copyfile('assets/bigsandylandscape.obj', 'bigsandylandscape.obj')
+fs.copyfile('assets/bigsandylandscape.png', 'bigsandylandscape.png')
 
 tests_exe = executable(meson.project_name() + '.tests',
     cpp_pch: 'test/testpch.h',

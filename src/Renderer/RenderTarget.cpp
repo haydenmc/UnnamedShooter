@@ -49,6 +49,22 @@ namespace
 
         return Eigen::Vector3f{ alpha, beta, gamma };
     }
+
+    inline float WrapUvValue(float const& uvCoord)
+    {
+        if (uvCoord > 1.0f)
+        {
+            return (uvCoord - std::trunc(uvCoord));
+        }
+        else if (uvCoord <= 0.0f)
+        {
+            return 1.0f + (uvCoord - std::trunc(uvCoord));
+        }
+        else
+        {
+            return uvCoord;
+        }
+    }
 }
 
 namespace game
@@ -78,7 +94,7 @@ void RenderTarget::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
     Buffer.at((Width * y) + x) = color;
 }
 
-void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture> texture,
+void RenderTarget::DrawTexel(uint16_t x, uint16_t y, PngTexture* texture,
         Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB, Eigen::Vector4f const& vertC,
         Eigen::Vector2f const& texA, Eigen::Vector2f const& texB, Eigen::Vector2f const& texC)
 {
@@ -109,16 +125,8 @@ void RenderTarget::DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture>
 
     // Intelligently clamp with wraparound to [0, 1]
     // (apparently some OBJ files use UV values <> 1 to 'wrap around')
-    interpolatedU = std::fmod(interpolatedU, 1.0f);
-    if (interpolatedU < 0.0f)
-    {
-        interpolatedU += 1.0f;
-    }
-    interpolatedV = std::fmod(interpolatedV, 1.0f);
-    if (interpolatedV < 0.0f)
-    {
-        interpolatedV += 1.0f;
-    }
+    interpolatedU = WrapUvValue(interpolatedU);
+    interpolatedV = WrapUvValue(interpolatedV);
 
     uint16_t textureX{ std::clamp(static_cast<uint16_t>(interpolatedU * texture->Width()),
         uint16_t{ 0 }, static_cast<uint16_t>(texture->Width() - 1)) };
@@ -179,7 +187,7 @@ void RenderTarget::DrawLine(Eigen::Vector2f const& inA, Eigen::Vector2f const& i
 
 void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,
     Eigen::Vector4f const& vertC, Eigen::Vector2f const& texA, Eigen::Vector2f const& texB,
-    Eigen::Vector2f const& texC, std::shared_ptr<PngTexture> texture)
+    Eigen::Vector2f const& texC, PngTexture* texture)
 {
     // First, convert vertices from floating point to fixed-point numbers to ensure we don't run
     // into precision issues when calculating ownership of triangle edges.

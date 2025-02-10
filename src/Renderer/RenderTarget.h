@@ -11,7 +11,7 @@ struct RenderTarget
     void ClearPixelBuffer(uint32_t color);
     void ClearZBuffer();
     void DrawPixel(uint16_t x, uint16_t y, uint32_t color);
-    void DrawTexel(uint16_t x, uint16_t y, std::shared_ptr<PngTexture> texture,
+    void DrawTexel(uint16_t x, uint16_t y, PngTexture* texture,
         Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB, Eigen::Vector4f const& vertC,
         Eigen::Vector2f const& texA, Eigen::Vector2f const& texB, Eigen::Vector2f const& texC);
     void DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2,
@@ -21,7 +21,7 @@ struct RenderTarget
         Eigen::Vector4f const& vertC, uint32_t color);
     void DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,
         Eigen::Vector4f const& vertC, Eigen::Vector2f const& texA, Eigen::Vector2f const& texB,
-        Eigen::Vector2f const& texC, std::shared_ptr<PngTexture> texture);
+        Eigen::Vector2f const& texC, PngTexture* texture);
 
     uint16_t const Width;
     uint16_t const Height;

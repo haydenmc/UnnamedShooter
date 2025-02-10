@@ -361,7 +361,7 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
             m_frameBuffer.DrawTexturedTriangle(projectedVertices.at(0), projectedVertices.at(1),
                 projectedVertices.at(2), triangle.TextureCoordinates.at(0),
                 triangle.TextureCoordinates.at(1), triangle.TextureCoordinates.at(2),
-                mesh->Texture);
+                mesh->Texture.get());
         }
     }
 #endif

@@ -236,53 +236,7 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
     auto entityTranslate{ Translation(entity->GetPosition()) };
     auto entityRotate { Rotation(entity->GetRotation()) };
 
-    // Vertex points
-#if FALSE
-    for (const auto& vertex : mesh->Vertices)
-    {
-        Eigen::Vector4f v{ vertex.x(), vertex.y(), vertex.z(), 1.0f };
-        auto transformedVertex{ m_projectionMatrix * viewMatrix * entityTranslate * entityRotate * v };
-        auto screenX{ (transformedVertex.x() / transformedVertex.w()) * (m_resolution.Width / 2.0f) +
-            (m_resolution.Width / 2.0f) + 0.5f };
-        auto screenY{ (transformedVertex.y() / transformedVertex.w()) * (m_resolution.Height / 2.0f) +
-            (m_resolution.Height / 2.0f) + 0.5f };
-        m_frameBuffer.DrawPixel(static_cast<uint16_t>(screenX), static_cast<uint16_t>(screenY), 0xFFFFFFFF);
-    }
-#endif
-
-    // Wireframe
-#if FALSE
-    for (const auto& face : mesh->Faces)
-    {
-        std::array<glm::vec3, 3> faceVertices{
-            mesh->Vertices.at(face.MeshVertexIndices.at(0)),
-            mesh->Vertices.at(face.MeshVertexIndices.at(1)),
-            mesh->Vertices.at(face.MeshVertexIndices.at(2)),
-        };
-
-        std::array<glm::vec4, 3> transformedVertices{
-            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(0).x, faceVertices.at(0).y, faceVertices.at(0).z, 1.0f },
-            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(1).x, faceVertices.at(1).y, faceVertices.at(1).z, 1.0f },
-            m_projectionMatrix * viewMatrix * entityTransform * glm::vec4{ faceVertices.at(2).x, faceVertices.at(2).y, faceVertices.at(2).z, 1.0f },
-        };
-
-        std::array<Vector2, 3> screenSpaceCoordinates{
-            Vector2{ (transformedVertices.at(0).x / transformedVertices.at(0).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
-                (transformedVertices.at(0).y / transformedVertices.at(0).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
-            Vector2{ (transformedVertices.at(1).x / transformedVertices.at(1).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
-                (transformedVertices.at(1).y / transformedVertices.at(1).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
-            Vector2{ (transformedVertices.at(2).x / transformedVertices.at(2).w) * (m_resolution.Width / 2.0f) + (m_resolution.Width / 2.0f),
-                (transformedVertices.at(2).y / transformedVertices.at(2).w) * (m_resolution.Height / 2.0f) + (m_resolution.Height / 2.0f) },
-        };
-
-        DrawLine(screenSpaceCoordinates.at(0), screenSpaceCoordinates.at(1), 0xFF00FF00);
-        DrawLine(screenSpaceCoordinates.at(1), screenSpaceCoordinates.at(2), 0xFF00FF00);
-        DrawLine(screenSpaceCoordinates.at(2), screenSpaceCoordinates.at(0), 0xFF00FF00);
-    }
-#endif
-
     // Textured
-#if TRUE
     for (const auto& face : mesh->Faces)
     {
         // Prepare vertices to be transformed via matrix multiplication
@@ -357,13 +311,19 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
                 vertex.x() = (vertex.x() / vertex.w()) * halfWidth + halfWidth;
                 vertex.y() = (vertex.y() / vertex.w()) * halfHeight + halfHeight;
             }
-
+#if TRUE
             m_frameBuffer.DrawTexturedTriangle(projectedVertices.at(0), projectedVertices.at(1),
-                projectedVertices.at(2), triangle.TextureCoordinates.at(0),
-                triangle.TextureCoordinates.at(1), triangle.TextureCoordinates.at(2),
-                mesh->Texture.get());
+            projectedVertices.at(2), triangle.TextureCoordinates.at(0),
+            triangle.TextureCoordinates.at(1), triangle.TextureCoordinates.at(2),
+            mesh->Texture.get());
+#endif
+#if TRUE
+            // Draw wireframe
+            m_frameBuffer.DrawLine(projectedVertices.at(0).head<2>(), projectedVertices.at(1).head<2>(), 0xFF00FF00);
+            m_frameBuffer.DrawLine(projectedVertices.at(1).head<2>(), projectedVertices.at(2).head<2>(), 0xFF00FF00);
+            m_frameBuffer.DrawLine(projectedVertices.at(2).head<2>(), projectedVertices.at(0).head<2>(), 0xFF00FF00);
+#endif
         }
     }
-#endif
 }
 }

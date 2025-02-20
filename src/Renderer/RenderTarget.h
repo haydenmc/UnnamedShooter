@@ -17,6 +17,8 @@ struct RenderTarget
     void DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2,
         uint16_t y2, uint32_t color);
     void DrawLine(Eigen::Vector2f const& inA, Eigen::Vector2f const& inB, uint32_t color);
+    bool IsTriangleOccluded(Eigen::Vector4f const& vertexA, Eigen::Vector4f const& vertexB,
+        Eigen::Vector4f const& vertexC) const;
     void DrawShadedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,
         Eigen::Vector4f const& vertC, uint32_t color);
     void DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,

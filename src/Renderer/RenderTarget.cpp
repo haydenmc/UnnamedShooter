@@ -12,14 +12,6 @@ namespace
         Eigen::Vector2<fpm::fixed_24_8> const ab{ pointB - pointA };
         Eigen::Vector2<fpm::fixed_24_8> const ac{ pointC - pointA };
         fpm::fixed_24_8 det{((ab.y() * ac.x()) - (ab.x() * ac.y()))};
-        // SPDLOG_DEBUG("a: {},{} b: {},{} c: {},{}",
-        //     static_cast<float>(pointA.x()), static_cast<float>(pointA.y()),
-        //     static_cast<float>(pointB.x()), static_cast<float>(pointB.y()),
-        //     static_cast<float>(pointC.x()), static_cast<float>(pointC.y()));
-        // SPDLOG_DEBUG("ab: {}, {} ac: {}, {}", static_cast<float>(ab.x()),
-        //     static_cast<float>(ab.y()), static_cast<float>(ac.x()), static_cast<float>(ac.y()));
-        // SPDLOG_DEBUG("determinant: {}", static_cast<float>(det));
-
         return det;
     }
 
@@ -91,6 +83,8 @@ void RenderTarget::ClearPixelBuffer(uint32_t color)
 
 void RenderTarget::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
 {
+    if (y >= Height) y = Height - 1;
+    if (x >= Width) x = Width - 1;
     Buffer.at((Width * y) + x) = color;
 }
 
@@ -185,6 +179,36 @@ void RenderTarget::DrawLine(Eigen::Vector2f const& inA, Eigen::Vector2f const& i
     }
 }
 
+bool RenderTarget::IsTriangleOccluded(Eigen::Vector4f const &vertexA,
+    Eigen::Vector4f const &vertexB, Eigen::Vector4f const &vertexC) const
+{
+    if (((vertexA.x() + 0.5f) > Width) || ((vertexA.y() + 0.5f) > Height) ||
+        ((vertexB.x() + 0.5f) > Width) || ((vertexB.y() + 0.5f) > Height) ||
+        ((vertexC.x() + 0.5f) > Width) || ((vertexC.y() + 0.5f) > Height))
+    {
+        return false;
+    }
+    size_t zBufIndexA{ (Width * static_cast<size_t>(vertexA.y() + 0.5f)) +
+        static_cast<size_t>(vertexA.x() + 0.5f) };
+    size_t zBufIndexB{ (Width * static_cast<size_t>(vertexB.y() + 0.5f)) +
+        static_cast<size_t>(vertexB.x() + 0.5f) };
+    size_t zBufIndexC{ (Width * static_cast<size_t>(vertexC.y() + 0.5f)) +
+        static_cast<size_t>(vertexC.x() + 0.5f) };
+    if (ZBuffer.at(zBufIndexA) > (1.0f - (1.0f / vertexA.w())))
+    {
+        return false;
+    }
+    if (ZBuffer.at(zBufIndexB) > (1.0f - (1.0f / vertexB.w())))
+    {
+        return false;
+    }
+    if (ZBuffer.at(zBufIndexC) > (1.0f - (1.0f / vertexC.w())))
+    {
+        return false;
+    }
+    return true;
+}
+
 void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vector4f const& vertB,
     Eigen::Vector4f const& vertC, Eigen::Vector2f const& texA, Eigen::Vector2f const& texB,
     Eigen::Vector2f const& texC, PngTexture* texture)
@@ -197,6 +221,12 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vec
         fpm::fixed_24_8{ vertB.y() } };
     Eigen::Vector2<fpm::fixed_24_8> const vertC2D{ fpm::fixed_24_8{ vertC.x() },
         fpm::fixed_24_8{ vertC.y() } };
+
+    // Check the z-buffer to see if a triangle has already been drawn that fully occludes this one
+    // if (IsTriangleOccluded(vertA, vertB, vertC))
+    // {
+    //     return;
+    // }
 
     // Confirm vertices are provided in counter-clockwise order
     if (TriangleDeterminant(vertA2D, vertB2D, vertC2D) <= fpm::fixed_24_8{ 0 })
@@ -251,8 +281,7 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vec
                 (horizontalW.y() >= fpm::fixed_24_8{ 0 }) &&
                 (horizontalW.z() >= fpm::fixed_24_8{ 0 }))
             {
-                DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture,
-                    vertA, vertB, vertC, texA, texB, texC);
+                DrawTexel(x, y, texture, vertA, vertB, vertC, texA, texB, texC);
             }
 
             horizontalW = (horizontalW - dwdx);

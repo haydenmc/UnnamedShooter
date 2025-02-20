@@ -12,14 +12,6 @@ namespace
         Eigen::Vector2<fpm::fixed_24_8> const ab{ pointB - pointA };
         Eigen::Vector2<fpm::fixed_24_8> const ac{ pointC - pointA };
         fpm::fixed_24_8 det{((ab.y() * ac.x()) - (ab.x() * ac.y()))};
-        // SPDLOG_DEBUG("a: {},{} b: {},{} c: {},{}",
-        //     static_cast<float>(pointA.x()), static_cast<float>(pointA.y()),
-        //     static_cast<float>(pointB.x()), static_cast<float>(pointB.y()),
-        //     static_cast<float>(pointC.x()), static_cast<float>(pointC.y()));
-        // SPDLOG_DEBUG("ab: {}, {} ac: {}, {}", static_cast<float>(ab.x()),
-        //     static_cast<float>(ab.y()), static_cast<float>(ac.x()), static_cast<float>(ac.y()));
-        // SPDLOG_DEBUG("determinant: {}", static_cast<float>(det));
-
         return det;
     }
 
@@ -91,6 +83,8 @@ void RenderTarget::ClearPixelBuffer(uint32_t color)
 
 void RenderTarget::DrawPixel(uint16_t x, uint16_t y, uint32_t color)
 {
+    if (y >= Height) y = Height - 1;
+    if (x >= Width) x = Width - 1;
     Buffer.at((Width * y) + x) = color;
 }
 
@@ -251,8 +245,7 @@ void RenderTarget::DrawTexturedTriangle(Eigen::Vector4f const& vertA, Eigen::Vec
                 (horizontalW.y() >= fpm::fixed_24_8{ 0 }) &&
                 (horizontalW.z() >= fpm::fixed_24_8{ 0 }))
             {
-                DrawTexel(static_cast<uint16_t>(x), static_cast<uint16_t>(y), texture,
-                    vertA, vertB, vertC, texA, texB, texC);
+                DrawTexel(x, y, texture, vertA, vertB, vertC, texA, texB, texC);
             }
 
             horizontalW = (horizontalW - dwdx);

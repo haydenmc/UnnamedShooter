@@ -82,6 +82,7 @@ game_srcs = [
     'src/Input.cpp',
     'src/MathHelpers.cpp',
     'src/Mesh/Mesh.cpp',
+    'src/Painters/TextPainter.cpp',
     'src/Renderer/RenderTarget.cpp',
     'src/Renderer/Renderer.cpp',
     'src/Simulation.cpp',
@@ -115,6 +116,8 @@ fs.copyfile('assets/f22.obj',               'f22.obj')
 fs.copyfile('assets/f22.png',               'f22.png')
 fs.copyfile('assets/bigsandylandscape.obj', 'bigsandylandscape.obj')
 fs.copyfile('assets/bigsandylandscape.png', 'bigsandylandscape.png')
+fs.copyfile('assets/upheaval.fnt',          'upheaval.fnt')
+fs.copyfile('assets/upheaval.png',          'upheaval.png')
 
 tests_exe = executable(meson.project_name() + '.tests',
     cpp_pch: 'test/testpch.h',

@@ -112,7 +112,6 @@ std::shared_ptr<Mesh> Mesh::FromObjFile(std::filesystem::path objFilePath,
     std::shared_ptr<PngTexture> texture{ nullptr };
     if (textureFilePath)
     {
-        SPDLOG_INFO("Loading PNG texture file '{}'...", textureFilePath.value().string());
         texture = PngTexture::FromPngFile(textureFilePath.value());
     }
 

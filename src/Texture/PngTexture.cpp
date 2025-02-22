@@ -27,6 +27,7 @@ const uint32_t &PngTexture::ColorAt(uint16_t x, uint16_t y)
 
 PngTexture::PngTexture(const std::filesystem::path& file)
 {
+    SPDLOG_INFO("Loading texture from PNG file '{}'...", file.string());
     int width;
     int height;
     int componentsPerPixel;
@@ -63,4 +64,6 @@ PngTexture::PngTexture(const std::filesystem::path& file)
         }
     }
     stbi_image_free(data);
+    SPDLOG_INFO("Loaded texture '{}' @ {}x{} pixels", file.filename().string(), m_width,
+        m_height);
 }

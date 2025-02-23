@@ -2,7 +2,6 @@
 #include "Entity/CubeEntity.h"
 #include "Entity/LandscapeEntity.h"
 #include "Entity/PlayerEntity.h"
-#include "Painters/TextPainter.h"
 #include "Simulation.h"
 
 Simulation::Simulation()
@@ -13,10 +12,6 @@ Simulation::Simulation()
     playerEntity->SetPosition(Eigen::Vector3f{ 0.0f, 0.0f, -5.0f });
 
     m_simulationState.RootWorldEntity.MakeChild<LandscapeEntity>();
-
-    // REMOVEME
-    auto upheavalTextPainter{ TextPainter::FromBitmapFont("upheaval.fnt") };
-    // /REMOVEME
 }
 
 SimulationState const& Simulation::Update(InputState const& inputState)

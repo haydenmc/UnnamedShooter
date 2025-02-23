@@ -1,6 +1,8 @@
 #pragma once
 #include "../Texture/PngTexture.h"
 
+namespace game
+{
 struct RenderTarget;
 
 struct BitmapFontCharacterData
@@ -32,10 +34,11 @@ struct BitmapFontData
 struct TextPainter
 {
     static std::shared_ptr<TextPainter> FromBitmapFont(std::filesystem::path fontFile);
-    void PaintText(RenderTarget* target, std::string const& text) const;
+    void PaintText(RenderTarget* target, uint16_t x, uint16_t y, std::string_view text) const;
 
 private:
     TextPainter(std::filesystem::path fontFile);
     BitmapFontData m_fontData;
     std::shared_ptr<PngTexture> m_fontTexture;
 };
+}

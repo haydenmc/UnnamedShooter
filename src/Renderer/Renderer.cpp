@@ -193,13 +193,19 @@ Renderer::Renderer(std::shared_ptr<SDL_Window> window, const VideoConfiguration&
     m_projectionMatrix{ CreatePerspectiveMatrix(c_defaultFovYRads, m_resolution.Width,
         m_resolution.Height, c_nearPlane, c_farPlane) },
     m_frustumPlanes{ CreateFrustumPlanes(GetFovX(m_resolution.Width, m_resolution.Height,
-        c_defaultFovYRads), c_defaultFovYRads, c_nearPlane, c_farPlane) }
+        c_defaultFovYRads), c_defaultFovYRads, c_nearPlane, c_farPlane) },
+    // REMOVEME
+    m_textPainter{ TextPainter::FromBitmapFont("upheaval.fnt") }
+    // /REMOVEME
 {}
 
 void Renderer::Render(SimulationState const& simulationState)
 {
     m_frameBuffer.ClearBuffers();
     DrawScene(&simulationState.Camera, &simulationState.RootWorldEntity);
+    // REMOVEME
+    m_textPainter->PaintText(&m_frameBuffer, 64, 64, "The *quick* brown fox jumps over the (lazy) dog?");
+    // /REMOVEME
     CheckSdlReturn(SDL_UpdateTexture(m_frameBufferTexture.get(), nullptr,
         m_frameBuffer.Buffer.data(), (m_resolution.Width * sizeof(uint32_t))));
     CheckSdlReturn(SDL_RenderCopy(m_renderer.get(), m_frameBufferTexture.get(), nullptr, nullptr));

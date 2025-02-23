@@ -20,7 +20,7 @@ namespace
         KerningPairs = 5,
     };
 
-    void LoadBitmapFontFileInfoBlock(std::ifstream& file, BitmapFontData& fontData,
+    void LoadBitmapFontFileInfoBlock(std::ifstream& file, game::BitmapFontData& fontData,
         uint32_t blockSize)
     {
         {
@@ -44,7 +44,7 @@ namespace
         fontData.FontName = std::string{ buf, blockSize };
     }
 
-    void LoadBitmapFontFileCommonBlock(std::ifstream& file, BitmapFontData& fontData,
+    void LoadBitmapFontFileCommonBlock(std::ifstream& file, game::BitmapFontData& fontData,
         uint32_t /* blockSize */)
     {
         file.read(reinterpret_cast<char*>(&fontData.LineHeight), sizeof(fontData.LineHeight));
@@ -63,7 +63,7 @@ namespace
         file.seekg(5, std::ios::cur);
     }
 
-    void LoadBitmapFontFilePagesBlock(std::ifstream& file, BitmapFontData& fontData,
+    void LoadBitmapFontFilePagesBlock(std::ifstream& file, game::BitmapFontData& fontData,
         uint32_t blockSize)
     {
         if (blockSize > c_maxFontFileStringLength)
@@ -77,13 +77,13 @@ namespace
         fontData.TextureFileName = std::string{ buf, blockSize };
     }
 
-    void LoadBitmapFontFileCharsBlock(std::ifstream& file, BitmapFontData& fontData,
+    void LoadBitmapFontFileCharsBlock(std::ifstream& file, game::BitmapFontData& fontData,
         uint32_t blockSize)
     {
         size_t numChars{ blockSize / c_numBytesPerChar };
         for (size_t i{ 0 }; i < numChars; ++i)
         {
-            BitmapFontCharacterData character;
+            game::BitmapFontCharacterData character;
             file.read(reinterpret_cast<char*>(&character.Id), sizeof(character.Id));
             file.read(reinterpret_cast<char*>(&character.TextureX), sizeof(character.TextureX));
             file.read(reinterpret_cast<char*>(&character.TextureY), sizeof(character.TextureY));
@@ -97,7 +97,7 @@ namespace
         }
     }
 
-    void LoadBitmapFontFileBlock(std::ifstream& file, BitmapFontData& fontData)
+    void LoadBitmapFontFileBlock(std::ifstream& file, game::BitmapFontData& fontData)
     {
         uint32_t blockSize{ 0 };
         uint8_t blockId{ 0 };
@@ -126,12 +126,12 @@ namespace
         }
     }
 
-    BitmapFontData LoadBitmapFontData(std::filesystem::path const& fontFile)
+    game::BitmapFontData LoadBitmapFontData(std::filesystem::path const& fontFile)
     {
         SPDLOG_INFO("Loading font from file '{}'...", fontFile.filename().string());
         // Read the BMF "Bitmap Font Generator" font file as specified by
         // https://www.angelcode.com/products/bmfont/doc/file_format.html
-        BitmapFontData fontData;
+        game::BitmapFontData fontData;
         std::ifstream file{ fontFile, std::ios::binary };
         if (!file)
         {
@@ -165,22 +165,55 @@ namespace
         return fontData;
     }
 
-    std::shared_ptr<PngTexture> LoadFontTexture(BitmapFontData const& fontData)
+    std::shared_ptr<PngTexture> LoadFontTexture(game::BitmapFontData const& fontData)
     {
         return PngTexture::FromPngFile(fontData.TextureFileName);
     }
 }
 
+namespace game
+{
 std::shared_ptr<TextPainter> TextPainter::FromBitmapFont(std::filesystem::path fontFile)
 {
     return std::shared_ptr<TextPainter>(new TextPainter(fontFile));
 }
 
-void TextPainter::PaintText(RenderTarget* /*target*/, std::string const& /*text*/) const
+void TextPainter::PaintText(RenderTarget* target, uint16_t x, uint16_t y,
+    std::string_view text) const
 {
-
+    uint16_t currentX{ x };
+    uint16_t currentY{ y };
+    for (size_t i{ 0 }; i < text.size(); ++i)
+    {
+        auto const& c{ std::toupper(text.at(i)) };
+        if (!m_fontData.Characters.contains(static_cast<uint32_t>(c)))
+        {
+            continue;
+        }
+        auto const& fontCharacter{ m_fontData.Characters.at(static_cast<uint32_t>(c)) };
+        for (uint16_t fontY{ 0 }; fontY < fontCharacter.Height; ++fontY)
+        {
+            for (uint16_t fontX{ 0 }; fontX < fontCharacter.Width; ++fontX)
+            {
+                auto screenX{ static_cast<uint16_t>(currentX + fontCharacter.OffsetX + fontX) };
+                auto screenY{ static_cast<uint16_t>(currentY + fontCharacter.OffsetY + fontY) };
+                auto textureX{ static_cast<uint16_t>(fontCharacter.TextureX + fontX) };
+                auto textureY{ static_cast<uint16_t>(fontCharacter.TextureY + fontY) };
+                auto const& textureColor{ m_fontTexture->ColorAt(textureX, textureY) };
+                if (((textureColor >> 24) & 0xFF) == 0)
+                {
+                    continue;
+                }
+                // TODO: Draw "on top of" current pixels
+                
+                target->DrawPixel(screenX, screenY, textureColor);
+            }
+        }
+        currentX += fontCharacter.AdvanceX;
+    }
 }
 
 TextPainter::TextPainter(std::filesystem::path fontFile) :
     m_fontData{ LoadBitmapFontData(fontFile) }, m_fontTexture{ LoadFontTexture(m_fontData) }
 { }
+}

@@ -82,9 +82,11 @@ game_srcs = [
     'src/Input.cpp',
     'src/MathHelpers.cpp',
     'src/Mesh/Mesh.cpp',
-    'src/Painters/TextPainter.cpp',
+    'src/Overlay/DebugOverlay.cpp',
+    'src/Painter/TextPainter.cpp',
     'src/Renderer/RenderTarget.cpp',
     'src/Renderer/Renderer.cpp',
+    'src/ResourceManager.cpp',
     'src/Simulation.cpp',
     'src/Texture/PngTexture.cpp',
 ]

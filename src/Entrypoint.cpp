@@ -2,6 +2,8 @@
 #include "Configuration.h"
 #include "Display.h"
 #include "Input.h"
+#include "Overlay/DebugOverlay.h"
+#include "ResourceManager.h"
 #include "Simulation.h"
 
 using ArgList = std::vector<std::pair<std::string, std::string>>;
@@ -29,10 +31,15 @@ try // Don't catch unhandled exceptions for debug builds
     // Initialize subsystems in their own scope so we can perform additional
     // cleanup after they are destructed.
     {
+        game::ResourceManager::Initialize();
         Simulation simulation{};
         Display display{ resolution };
         game::Renderer renderer{ display.GetWindow(), resolution };
         Input input{};
+
+#ifdef DEBUG
+        renderer.AddOverlay(std::make_shared<game::DebugOverlay>());
+#endif
 
         // Run sim loop
         SPDLOG_INFO("Begin sim loop");

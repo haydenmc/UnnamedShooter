@@ -10,5 +10,6 @@ struct PlayerEntity : Entity
 private:
     CameraEntity *const m_camera;
     Eigen::Vector3f m_velocity{ 0.0f, 0.0f, 0.0f };
+    Eigen::Vector3f m_gravityVelocity{ 0.0f, 0.0f, 0.0f };
     float m_lookPitchRadians{ 0.0f };
 };

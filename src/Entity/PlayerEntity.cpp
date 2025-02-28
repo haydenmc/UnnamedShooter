@@ -3,6 +3,8 @@
 
 namespace
 {
+    constexpr float c_gravityAcceleration{ 0.00000000005f };
+    Eigen::Vector3f const c_gravityDirection{ 0.0f, 1.0f, 0.0f };
     constexpr float c_movementAcceleration{ 0.00000000005f };
     constexpr float c_maxMovementVelocity{  0.000005f };
     constexpr float c_movementFriction{     0.00000000004f };
@@ -10,7 +12,7 @@ namespace
     Eigen::Vector3f const c_backwardMovementDirection{  0.0f,  0.0f, -1.0f };
     Eigen::Vector3f const c_leftMovementDirection{     -1.0f,  0.0f,  0.0f };
     Eigen::Vector3f const c_rightMovementDirection{     1.0f,  0.0f,  0.0f };
-    constexpr float c_velocityMagnitudeDeadzone{ 0.0000001f };
+    constexpr float c_velocityMagnitudeDeadzone{ 0.000001f };
     constexpr float c_lookSensitivity{ 0.005f };
 }
 
@@ -53,13 +55,18 @@ void PlayerEntity::Update(std::chrono::microseconds deltaTime, InputState const 
     {
         m_velocity.setZero();
     }
+    
+    // Apply gravity
+    {
+        m_velocity += c_gravityDirection * (c_gravityAcceleration * deltaTime.count());
+    }
 
     // Clamp to maximum velocity
-    if (m_velocity.norm() > c_maxMovementVelocity)
-    {
-        m_velocity.normalize();
-        m_velocity *= c_maxMovementVelocity;
-    }
+    // if (m_velocity.norm() > c_maxMovementVelocity)
+    // {
+    //     m_velocity.normalize();
+    //     m_velocity *= c_maxMovementVelocity;
+    // }
 
     // Apply player velocity to player position
     Eigen::Vector3f movementDelta{ m_velocity * deltaTime.count() };

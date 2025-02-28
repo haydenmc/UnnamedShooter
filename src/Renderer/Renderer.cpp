@@ -326,7 +326,7 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
             triangle.TextureCoordinates.at(1), triangle.TextureCoordinates.at(2),
             mesh->Texture.get());
 #endif
-#if FALSE
+#if TRUE
             // Draw wireframe
             m_frameBuffer.DrawLine(projectedVertices.at(0).head<2>(), projectedVertices.at(1).head<2>(), 0xFF00FF00);
             m_frameBuffer.DrawLine(projectedVertices.at(1).head<2>(), projectedVertices.at(2).head<2>(), 0xFF00FF00);

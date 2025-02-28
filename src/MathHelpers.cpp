@@ -69,4 +69,20 @@ float CrossProduct2D(Eigen::Vector2f const& a, Eigen::Vector2f const& b)
 {
     return a.x() * b.y() - a.y() * b.x();
 }
+
+std::optional<Eigen::Vector3f> LinePlaneIntersect(Plane const& plane,
+    Eigen::Vector3f const& lineStart, Eigen::Vector3f const& lineEnd)
+{
+    // Thank you Jorge Rodriguez for a lovely explanation on how to calculate
+    // line-plane intersection:
+    // https://www.youtube.com/watch?v=fIu_8b2n8ZM
+    Eigen::Vector3f v{ lineEnd - lineStart };
+    Eigen::Vector3f w{ plane.Point - lineStart };
+    float k{ w.dot(plane.Normal) / v.dot(plane.Normal) };
+    if ((k < 0) || (k > 1))
+    {
+        return std::nullopt;
+    }
+    return lineStart + (k * v);
+}
 }

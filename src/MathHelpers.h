@@ -68,6 +68,10 @@ constexpr float Lerp(float const& a, float const& b, float const& t)
 
 template<typename T>
 constexpr bool AreEqual(T f1, T f2) { 
-  return (std::fabs(f1 - f2) <= std::numeric_limits<T>::epsilon() * std::fmax(std::fabs(f1), std::fabs(f2)));
+    return (std::fabs(f1 - f2) <= std::numeric_limits<T>::epsilon() *
+        std::fmax(std::fabs(f1), std::fabs(f2)));
 }
+
+std::optional<Eigen::Vector3f> LinePlaneIntersect(Plane const& plane,
+    Eigen::Vector3f const& lineStart, Eigen::Vector3f const& lineEnd);
 }

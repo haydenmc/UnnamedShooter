@@ -319,13 +319,13 @@ void Renderer::DrawEntityMesh(Eigen::Matrix4f const& viewMatrix, Entity const* e
                 vertex.x() = (vertex.x() / vertex.w()) * halfWidth + halfWidth;
                 vertex.y() = (vertex.y() / vertex.w()) * halfHeight + halfHeight;
             }
-#if TRUE
+#if 1
             m_frameBuffer.DrawTexturedTriangle(projectedVertices.at(0), projectedVertices.at(1),
             projectedVertices.at(2), triangle.TextureCoordinates.at(0),
             triangle.TextureCoordinates.at(1), triangle.TextureCoordinates.at(2),
             mesh->Texture.get());
 #endif
-#if TRUE
+#if 0
             // Draw wireframe
             m_frameBuffer.DrawLine(projectedVertices.at(0).head<2>(), projectedVertices.at(1).head<2>(), 0xFF00FF00);
             m_frameBuffer.DrawLine(projectedVertices.at(1).head<2>(), projectedVertices.at(2).head<2>(), 0xFF00FF00);

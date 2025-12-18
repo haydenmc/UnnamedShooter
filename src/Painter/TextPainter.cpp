@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "TextPainter.h"
 #include "../Renderer/RenderTarget.h"
 

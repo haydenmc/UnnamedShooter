@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "DebugOverlay.h"
 #include "../ResourceManager.h"
 

@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "Configuration.h"
 #include "../Mesh/Mesh.h"
 #include "Renderer.h"

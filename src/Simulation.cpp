@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "Entity/CubeEntity.h"
 #include "Entity/LandscapeEntity.h"
 #include "Entity/PlayerEntity.h"

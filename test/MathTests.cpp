@@ -1,4 +1,3 @@
-#include <testpch.h>
 #include <MathHelpers.h>
 #include <Mesh/Mesh.h>
 

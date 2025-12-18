@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "Mesh.h"
 
 namespace
@@ -137,23 +136,23 @@ std::shared_ptr<Mesh> Mesh::Cube()
 
     std::vector<MeshFace> faces{
         // FRONT
-        MeshFace{ { 1, 0, 2 } },
-        MeshFace{ { 1, 2, 3 } },
+        MeshFace{ { 1, 0, 2 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 1, 2, 3 }, { 0, 0, 0 }, 0 },
         // BACK
-        MeshFace{ { 7, 6, 4 } },
-        MeshFace{ { 7, 4, 5 } },
+        MeshFace{ { 7, 6, 4 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 7, 4, 5 }, { 0, 0, 0 }, 0 },
         // BOTTOM
-        MeshFace{ { 3, 2, 6 } },
-        MeshFace{ { 3, 6, 7 } },
+        MeshFace{ { 3, 2, 6 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 3, 6, 7 }, { 0, 0, 0 }, 0 },
         // TOP
-        MeshFace{ { 5, 4, 0 } },
-        MeshFace{ { 5, 0, 1 } },
+        MeshFace{ { 5, 4, 0 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 5, 0, 1 }, { 0, 0, 0 }, 0 },
         // LEFT
-        MeshFace{ { 0, 4, 6 } },
-        MeshFace{ { 0, 6, 2 } },
+        MeshFace{ { 0, 4, 6 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 0, 6, 2 }, { 0, 0, 0 }, 0 },
         // RIGHT
-        MeshFace{ { 5, 1, 3 } },
-        MeshFace{ { 5, 3, 7 } },
+        MeshFace{ { 5, 1, 3 }, { 0, 0, 0 }, 0 },
+        MeshFace{ { 5, 3, 7 }, { 0, 0, 0 }, 0 },
     };
     return std::make_shared<Mesh>(
         vertices,
@@ -177,8 +176,8 @@ std::shared_ptr<Mesh> Mesh::AdjoiningTriangles()
         Eigen::Vector2f{ 1.0f, 1.0f },
     };
     std::vector<MeshFace> faces{
-        MeshFace{ { 2, 1, 0 }, { 2, 1, 0 } },
-        MeshFace{ { 2, 3, 1 }, { 2, 3, 1 } },
+        MeshFace{ { 2, 1, 0 }, { 2, 1, 0 }, 0 },
+        MeshFace{ { 2, 3, 1 }, { 2, 3, 1 }, 0 },
     };
     return std::make_shared<Mesh>(
         vertices,

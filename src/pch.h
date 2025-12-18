@@ -36,10 +36,21 @@
 #include "Utility/SDLWrappers.h"
 
 // Eigen
+#ifdef _MSC_VER
 #pragma warning(push, 0) // Disable all warnings
+#elif defined(__GNUC__) || defined(__clang__)                                                                                                                        
+#pragma GCC diagnostic push                                                                                                                                          
+#pragma GCC diagnostic ignored "-Wall"                                                                                                                               
+#pragma GCC diagnostic ignored "-Wextra"                                                                                                                             
+#pragma GCC diagnostic ignored "-Wpedantic"                                                                                                                          
+#endif
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#ifdef _MSC_VER
 #pragma warning(pop)     // Restore the previous warning state
+#elif defined(__GNUC__) || defined(__clang__)                                                                                                                        
+#pragma GCC diagnostic pop                                                                                                                                           
+#endif
 
 // FPM
 #include <fpm/fixed.hpp>

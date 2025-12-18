@@ -1,4 +1,3 @@
-#include <pch.h>
 #include "Configuration.h"
 #include "Display.h"
 #include "Input.h"

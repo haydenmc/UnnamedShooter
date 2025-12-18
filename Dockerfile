@@ -8,6 +8,11 @@ RUN dnf install -y \
     ninja-build \
     pkg-config \
     SDL2-devel \
+    wayland-devel \
+    wayland-protocols-devel \
+    libxkbcommon-devel \
+    libdecor-devel \
+    mesa-libEGL-devel \
     python3 \
     python3-pip \
     git \
